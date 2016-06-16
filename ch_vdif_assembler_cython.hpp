@@ -5,16 +5,16 @@ namespace vdif_assembler {
 }; // pacify emacs c-mode
 #endif
 
-struct cython_stream {
-    std::shared_ptr<vdif_stream> p;
-    cython_stream(const std::shared_ptr<vdif_stream> &p_) : p(p_) { xassert(p); }
-};
+// struct cython_stream {
+//     std::shared_ptr<vdif_stream> p;
+//     cython_stream(const std::shared_ptr<vdif_stream> &p_) : p(p_) { xassert(p); }
+// };
 
-inline cython_stream *cython_network_stream()
-{
-    std::shared_ptr<vdif_stream> p = make_network_stream();
-    return new cython_stream(p);
-}
+// inline cython_stream *cython_network_stream()
+// {
+//     std::shared_ptr<vdif_stream> p = make_network_stream();
+//     return new cython_stream(p);
+// }
 
 struct cpp_processor {
     std::shared_ptr<vdif_processor> p;
@@ -35,12 +35,11 @@ struct cython_assembled_chunk {
     }
 
     // FIXME how to get a "float complex" pointer from cython?
-    inline void fill_efield(void *efield_hack, int32_t *mask)
+    inline void fill_efield(std::uint8_t *efield, int32_t *mask)
     {
-	if (!efield_hack || !mask)
+	if (!efield || !mask)
 	    throw std::runtime_error("NULL pointer passed to fill_efield()");
 
-	std::complex<float> *efield = reinterpret_cast<std::complex<float> *> (efield_hack);
 	p->fill_efield_array_reference(efield, mask);
     }
 };
@@ -49,8 +48,8 @@ struct cython_assembler {
     vdif_assembler a;
     std::shared_ptr<processor_handle> python_processor;
 
-    cython_assembler(bool write_to_disk, int rbuf_size, int abuf_size, int assembler_nt)
-	: a(write_to_disk, rbuf_size, abuf_size, assembler_nt)
+    cython_assembler(bool write_to_disk, int rbuf_size, int abuf_size, int assembler_nt, int port)
+	: a(write_to_disk, rbuf_size, abuf_size, assembler_nt, int port)
     { }
 
     void register_cpp_processor(cpp_processor *processor)
@@ -74,7 +73,7 @@ struct cython_assembler {
 	    throw std::runtime_error("cython_assembler::get_next_python_chunk() called, but no python processor was registered");
 
 	// We don't bother collecting timing statistics for the python processor
-	thread_timer timer_unused;
+	//thread_timer timer_unused;
 
 	std::shared_ptr<assembled_chunk> chunk = this->python_processor->get_next_chunk(timer_unused);
 
@@ -90,11 +89,9 @@ struct cython_assembler {
 	python_processor = std::shared_ptr<processor_handle> ();
     }
 
-    void start_async(cython_stream *s)
+    void start_async()
     {
-	xassert(s);
-	xassert(s->p);
-	a.start_async(s->p);
+	a.start_async();
     }
 
     void wait_until_end()
