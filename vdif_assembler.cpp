@@ -1,8 +1,9 @@
 #include "vdif_assembler.hpp"
 #include "network_capture.cpp"
+#import <thread>
 
 
-namespace aro_vdif_assembler{
+namespace vdif_assembler{
 #if 0
 }; // pacify emacs c-mode
 #endif
@@ -33,11 +34,6 @@ assembled_chunk::set_data(int i, int x) {
 	data[i] = x;
 }
 
- 
-
-
-struct vdif_processor {};
-
 vdif_assembler::vdif_assembler(int port_number){
 	port = port_number;
 	vdif_processors processors[constants::max_processors];
@@ -59,7 +55,7 @@ int vdif_assembler::register_processor(vdif_processor *p) {
 		number_of_processors++;
 		return 1;
 	} else {
-		cout << "The assembler is full, can't register any new processors." << endl;
+		std::cout << "The assembler is full, can't register any new processors." << endl;
 		return 0;
 	}
 }
@@ -74,11 +70,11 @@ int vdif_assembler::kill_processor(vdif_processor *p) {
 			return 1;
 		}
 	}
-	cout << "Unable to find this processor."
+	std::cout << "Unable to find this processor."
 	return 0;
 }
 
-void vdif_assembler::run() {
+void vdif_assemble::run() {
 	
 	network_capture(port, header_buf, data_buf, &start_index, &end_index);
 	int *chunk_start;
@@ -94,6 +90,10 @@ void vdif_assembler::run() {
 		}
 	}
 
+}
+
+void vdif_assembler::start_async(){
+	std::thread (this.run).detach();
 }
 
 }

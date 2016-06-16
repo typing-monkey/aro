@@ -5,7 +5,7 @@ from libcpp.string cimport string
 from libcpp.vector cimport vector
 
 cdef extern from "vdif_assembler.cpp" namespace "vdif_assembler::constants":
-        int number_of_channels
+        int nfreq
 
 cdef extern from "ch_vdif_assembler_cython.hpp" namespace "vdif_assembler":
     cdef cppclass cython_stream:
