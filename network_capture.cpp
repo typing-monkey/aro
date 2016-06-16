@@ -8,9 +8,7 @@
 #include <unistd.h>
 #include "test.cpp"
 
-using namespace std;
-
-
+namespace vdif_network{
 int main() {
 	
 	int port = 10050;
@@ -24,18 +22,18 @@ int main() {
 
 	int sock_fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 	if (sock_fd < 0) {
-		cout << "socket failed." << endl;
+		cout << "socket failed." << std::endl;
 	}
 	server_address.sin_family = AF_INET;
 	server_address.sin_port = htons(port);
 	server_address.sin_addr.s_addr = inet_addr("127.0.0.1");
 
 	if (bind(sock_fd, (struct sockaddr *) &server_address, sizeof(server_address)) < 0) {
-		cout << "bind failed." <<endl;
+		cout << "bind failed." <<std::endl;
 	}
 	for (;;) {
 		bytes = read(sock_fd, dgram, sizeof(dgram));
-		cout << bytes <<endl;
+		cout << bytes <<std::endl;
 		output_data(dgram,bytes);
 		cin >> foo;
 		
@@ -45,5 +43,5 @@ int main() {
 
 
 }
-
+}
 
