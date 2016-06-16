@@ -6,17 +6,16 @@
 #include <cstring>
 #include <iostream>
 #include <unistd.h>
-#include "test.cpp"
+#include "vdif_reader.cpp"
 
-namespace vdif_network{
-int main() {
+using namespace std;
+
+int network_capture(int port, struct header *header_buf, unsigned char *data_buf, int *start, int *end) {
 	
-	int port = 10050;
 	int size = 1056 * 32;
-	int bytes = 0;
+
 	unsigned char dgram[size];
 	
-	int foo;
 	struct sockaddr_in server_address;
 	memset(&server_address, 0, sizeof(server_address));
 
@@ -32,10 +31,9 @@ int main() {
 		cout << "bind failed." <<std::endl;
 	}
 	for (;;) {
-		bytes = read(sock_fd, dgram, sizeof(dgram));
-		cout << bytes <<std::endl;
-		output_data(dgram,bytes);
-		cin >> foo;
+		if (read(sock_fd, dgram, sizeof(dgram)) == size) {
+			vdif_read(dgram, bytes, header_buf, data_buf, start, end);
+		}
 		
 	}
 
