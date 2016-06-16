@@ -5,7 +5,8 @@ namespace aro_vdif_assembler{
 #endif
 
 namespace constants{
-
+	int number_of_channels = 1024;
+	int frames_per_chunk = 391;
 }
 
 struct vdif_processor{
