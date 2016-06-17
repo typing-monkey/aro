@@ -11,8 +11,8 @@ cdef extern from "ch_vdif_assembler_cython.hpp" namespace "vdif_assembler":
     cdef cppclass cython_stream:
         pass
 
-    cdef cppclass cpp_processor:
-        pass    # opaque to cython
+    #cdef cppclass cpp_processor:
+    #    pass    # opaque to cython
 
     cdef cppclass cython_assembled_chunk:
         long t0
@@ -25,8 +25,8 @@ cdef extern from "ch_vdif_assembler_cython.hpp" namespace "vdif_assembler":
         cython_assembler(bool write_to_disk, int rbuf_size, int abuf_size, int assembler_nt, int port) except +
 
         void register_cpp_processor(cpp_processor *p) except +
-        void register_python_processor() except +
-        void unregister_python_processor() except +
+        #void register_python_processor() except +
+        #void unregister_python_processor() except +
         void start_async() except +
         void wait_until_end() except +
 

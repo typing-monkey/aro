@@ -16,10 +16,10 @@ namespace vdif_assembler {
 //     return new cython_stream(p);
 // }
 
-struct cpp_processor {
-	std::shared_ptr<vdif_processor> p;
-	cpp_processor(const std::shared_ptr<vdif_processor> &p_) : p(p_) { xassert(p); }
-};
+// struct cpp_processor {
+// 	std::shared_ptr<vdif_processor> p;
+// 	cpp_processor(const std::shared_ptr<vdif_processor> &p_) : p(p_) { xassert(p); }
+// };
 
 struct cython_assembled_chunk {
 	std::shared_ptr<assembled_chunk> p;
@@ -46,10 +46,10 @@ struct cython_assembled_chunk {
 
 struct cython_assembler {
 	vdif_assembler a;
-	std::shared_ptr<processor_handle> python_processor;
+	//std::shared_ptr<processor_handle> python_processor;
 
 	cython_assembler(bool write_to_disk, int rbuf_size, int abuf_size, int assembler_nt, int port)
-	: a(assembler_nt, port)
+	: a(port)
 	{ }
 
 	void register_cpp_processor(cpp_processor *processor)
@@ -59,35 +59,35 @@ struct cython_assembler {
 	a.register_processor(processor->p);
 	}
 
-	void register_python_processor()
-	{
-	if (python_processor)
-		throw std::runtime_error("double call to cython_assembler::register_python_processor");
-	python_processor = std::make_shared<processor_handle> ("python processor", a.nc);
-	}
+	// void register_python_processor()
+	// {
+	// if (python_processor)
+	// 	throw std::runtime_error("double call to cython_assembler::register_python_processor");
+	// python_processor = std::make_shared<processor_handle> ("python processor", a.nc);
+	// }
 
-	// can return NULL
-	cython_assembled_chunk *get_next_python_chunk()
-	{
-	if (!python_processor)
-		throw std::runtime_error("cython_assembler::get_next_python_chunk() called, but no python processor was registered");
+	// // can return NULL
+	// cython_assembled_chunk *get_next_python_chunk()
+	// {
+	// if (!python_processor)
+	// 	throw std::runtime_error("cython_assembler::get_next_python_chunk() called, but no python processor was registered");
 
-	// We don't bother collecting timing statistics for the python processor
-	thread_timer timer_unused;
+	// // We don't bother collecting timing statistics for the python processor
+	// thread_timer timer_unused;
 
-	std::shared_ptr<assembled_chunk> chunk = this->python_processor->get_next_chunk(timer_unused);
+	// std::shared_ptr<assembled_chunk> chunk = this->python_processor->get_next_chunk(timer_unused);
 
-	if (!chunk)
-		return NULL;
+	// if (!chunk)
+	// 	return NULL;
 
-	return new cython_assembled_chunk(chunk);
-	}
+	// return new cython_assembled_chunk(chunk);
+	// }
 
-	// this seemed like a good idea, before calling wait_until_end()
-	void unregister_python_processor()
-	{
-	python_processor = std::shared_ptr<processor_handle> ();
-	}
+	// // this seemed like a good idea, before calling wait_until_end()
+	// void unregister_python_processor()
+	// {
+	// python_processor = std::shared_ptr<processor_handle> ();
+	// }
 
 	void start_async()
 	{
@@ -96,8 +96,8 @@ struct cython_assembler {
 
 	void wait_until_end()
 	{
-	if (python_processor)
-		throw std::runtime_error("cython_assembler::wait_until_end() called with python processor registered");
+	// if (python_processor)
+	// 	throw std::runtime_error("cython_assembler::wait_until_end() called with python processor registered");
 
 	a.wait_until_end();
 	}
