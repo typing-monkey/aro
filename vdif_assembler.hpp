@@ -4,14 +4,14 @@
 using namespace std;
 
 struct header {
-	long int t0;
+	long unsigned int t0;
 	int polarization;
 };
 
 
 struct assembled_chunk {
 
-	long int t0;
+	long unsigned int t0;
 	unsigned char *data;
 
 	assembled_chunk(long int t0);
@@ -44,7 +44,8 @@ struct vdif_assembler {
 	struct header *header_buf;
 
 	vdif_processor **processors;
-
+	thread *processor_threads;
+	
 	vdif_assembler();
 
 	~vdif_assembler();
