@@ -21,6 +21,23 @@ namespace vdif_assembler {
 // 	cpp_processor(const std::shared_ptr<vdif_processor> &p_) : p(p_) { xassert(p); }
 // };
 
+struct base_python_processor: public vdif_processor {
+	void* python_callback;
+	base_python_processor(char* name, void* python_callback_) : vdif_processor(name){
+		python_callback = python_callback_;
+	}
+	void initialize(){}
+	void process_chunk(const std::shared_ptr<assembled_chunk> &a) {
+		python_callback(a)
+	}
+	void finalize(){}
+};
+
+struct cpp_processor {
+	vdif_processor p;
+	cpp_processor(const vdif_processor* &p_) : p(p_) { xassert(p); }
+};
+
 struct cython_assembled_chunk {
 	std::shared_ptr<assembled_chunk> p;
 	int64_t t0;

@@ -2,12 +2,12 @@ include Makefile.local
 
 CC:= g++ -Wall -Wextra -Wconversion
 
-INCFILES= vdif_assembler.hpp vdif_assembler.cpp ch_vdif_assembler_kernels.hpp
+INCFILES= vdif_assembler.hpp vdif_assembler.cpp
 LIBCYTHON=ch_vdif_assembler_cython.so
 PYMODULES=ch_vdif_assembler.py
 
-vdif_reader: vdif_reader.cpp vdif_reader.hpp data_process.cpp
-	$(CC) -o vdif_reader vdif_reader.cpp
+# vdif_reader: vdif_reader.cpp vdif_reader.hpp data_process.cpp
+# 	$(CC) -o vdif_reader vdif_reader.cpp
 
 cython: $(LIBCYTHON)
 

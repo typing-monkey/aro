@@ -1,8 +1,9 @@
-from libc.stdint cimport int32_t, int64_t
+from libc.stdint cimport int32_t, int64_t, uint8_t
 
 from libcpp cimport bool
 from libcpp.string cimport string
 from libcpp.vector cimport vector
+cimport numpy as np
 
 cdef extern from "vdif_assembler.cpp" namespace "vdif_assembler::constants":
         int nfreq
@@ -11,14 +12,14 @@ cdef extern from "ch_vdif_assembler_cython.hpp" namespace "vdif_assembler":
     cdef cppclass cython_stream:
         pass
 
-    #cdef cppclass cpp_processor:
-    #    pass    # opaque to cython
+    cdef cppclass cpp_processor:
+        pass    # opaque to cython
 
     cdef cppclass cython_assembled_chunk:
         long t0
         int nt
 
-        void fill_efield(float complex *efield, int *mask) except +
+        void fill_efield(uint8_t *efield, int32_t *mask) except +
 
 
     cdef cppclass cython_assembler:
