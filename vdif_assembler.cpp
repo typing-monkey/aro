@@ -6,6 +6,7 @@
 #include <cstring>
 #include <iostream>
 #include <unistd.h>
+#include <chrono>
 #include <thread>
 #include <mutex>
 #include <condition_variable>
@@ -53,13 +54,15 @@ vdif_processor::~vdif_processor(){
 
 void vdif_processor::process_chunk(assembled_chunk *c) {
 	std::cout << c->t0 << std::endl;
+	this_thread::sleep_for(chrono::milliseconds(int(constants::chunk_size/2*2.56/1000)));
 	cout << "Processing chunk done." << endl;
 
 }
 
 
 vdif_assembler::vdif_assembler(){
-
+	
+	processor_threads = new thread [constants::max_processors];
 	processors = new vdif_processor *[constants::max_processors];
 	number_of_processors = 0;
 	data_buf = new unsigned char[constants::buffer_size * constants::nfreq];
@@ -136,15 +139,16 @@ void vdif_assembler::assemble_chunk() {
 		}
 			
 		std::cout << "Chunk found" << std::endl;
-			
+		//cout << "start: " << start_index << " end: " << end_index << endl;
 		c->t0 = header_buf[start_index].t0;
 		
 		for (int i = 0; i < constants::chunk_size * constants::nfreq; i++) {
-			c->set_data(i, data_buf[start_index+i]);
+			c->set_data(i, data_buf[start_index*constants::nfreq+i]);
 		}
-		start_index += constants::buffer_size;
+		start_index += constants::chunk_size;
 
 		bufsize -= constants::chunk_size;
+		cout << "excess: " << bufsize << endl;
 		lk.unlock();
 
 		if (start_index >= constants::buffer_size) {
@@ -152,7 +156,10 @@ void vdif_assembler::assemble_chunk() {
 		}
 
 		for (int i = 0; i < number_of_processors; i++) {
-			processors[i]->process_chunk(c);
+			processor_threads[i]= thread(&vdif_processor::process_chunk,processors[i],c);
+		}
+		for (int i = 0; i < number_of_processors; i++) {
+			processor_threads[i].join();
 		}
 			
 		
@@ -207,11 +214,12 @@ void vdif_assembler::vdif_read(unsigned char *data, int size) {
 			word[i] = (data[count + 3] << 24) + (data[count + 2] << 16) + (data[count + 1] << 8) + data[count];
 			count += 4;
 		}
-		header_buf[end_index].t0 = (long int)((word[0] & 0x3FFFFFFF) * constants::frame_per_second + (word[1] & 0xFFFFFF));
+		header_buf[end_index].t0 =(long int)(word[0] & 0x3FFFFFFF) * (long int)(constants::frame_per_second) + (long int) (word[1] & 0xFFFFFF);
 		header_buf[end_index].polarization = (word[3] >> 16) & 0x3FF;
-
+		//cout << "time: " << (word[0] & 0x3FFFFFFF) << " frame: " << (word[1] & 0xFFFFFF) << endl;
+		//cout << header_buf[end_index].t0 << endl;
 		for (int i = 0; i < constants::nfreq; i++) {
-			data_buf[end_index+i] = data[count];
+			data_buf[end_index*constants::nfreq+i] = data[count];
 			count++;
 		}
 		end_index++;
