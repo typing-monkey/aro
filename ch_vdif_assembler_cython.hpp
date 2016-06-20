@@ -1,4 +1,4 @@
-#include "vdif_assembler.cpp"
+#include "vdif_assembler.hpp"
 
 namespace vdif_assembler {
 #if 0
@@ -73,7 +73,7 @@ struct cython_assembler {
 	{
 	xassert(processor);
 	xassert(processor->p);
-	a.register_processor(processor->p);
+	a.register_processor(&(processor->p));
 	}
 
 	// void register_python_processor()

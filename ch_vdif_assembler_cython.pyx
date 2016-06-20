@@ -8,12 +8,14 @@ import numpy as np
 cimport numpy as np
 
 cimport ch_vdif_assembler_pxd
+#from ch_vdif_assembler_pxd cimport cpp_processor
+#from ch_vdif_assembler_pxd cimport processor_wrapper
 
 ##############################################  Constants  #########################################
 
 chime_nfreq = ch_vdif_assembler_pxd.chime_nfreq
 timestamps_per_frame = ch_vdif_assembler_pxd.timestamps_per_frame
-num_disks = ch_vdif_assembler_pxd.num_disks
+#num_disks = ch_vdif_assembler_pxd.num_disks
 
 ############################################  cpp_processor  #######################################
 
@@ -83,6 +85,21 @@ cdef class assembled_chunk:
 #		pass
 
 
+#cdef class processor_wrapper:
+#	def __init__(self,proc):
+#		self.p =  <cpp_processor*>proc
+
+cdef class cpp_processor:
+	cdef ch_vdif_assembler_pxd.cpp_processor *p
+
+	def __cinit__(self):
+		self.p = NULL
+
+	def __dealloc__(self):
+		if self.p != NULL:
+			del self.p
+			self.p = NULL
+
 ##############################################  Assembler  #########################################
 
 
@@ -103,15 +120,16 @@ cdef class assembler:
 	#def register_python_processor(self):
 	#	self.p[0].register_python_processor()
 
-	def get_next_python_chunk(self):
-		cdef ch_vdif_assembler_pxd.cython_assembled_chunk *a = self.p[0].get_next_python_chunk()
+	#fix?
+	#def get_next_python_chunk(self):
+	#	cdef ch_vdif_assembler_pxd.cython_assembled_chunk *a = self.p[0].get_next_python_chunk()
 
-		if a == NULL:
-			return None
+	#	if a == NULL:
+	#		return None
  
-		ret = assembled_chunk()
-		ret.p = a
-		return ret
+	#	ret = assembled_chunk()
+	#	ret.p = a
+	#	return ret
 
 	#def unregister_python_processor(self):
 	#	self.p[0].unregister_python_processor()

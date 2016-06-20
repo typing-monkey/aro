@@ -2,19 +2,23 @@ include Makefile.local
 
 CC:= g++ -Wall -Wextra -Wconversion
 
-INCFILES= vdif_assembler.hpp vdif_assembler.cpp
+INCFILES= vdif_assembler.hpp vdif_processor.hpp
 LIBCYTHON=ch_vdif_assembler_cython.so
 PYMODULES=ch_vdif_assembler.py
 
 # vdif_reader: vdif_reader.cpp vdif_reader.hpp data_process.cpp
 # 	$(CC) -o vdif_reader vdif_reader.cpp
+all: $(BINFILES) $(LIBFILES) $(LIBCYTHON) $(TESTBINFILES)
 
 cython: $(LIBCYTHON)
+
+%.o: %.cpp $(INCFILES)
+	$(CPP) -c -o $@ $<
 
 %_cython.cpp: %_cython.pyx ch_vdif_assembler_pxd.pxd ch_vdif_assembler_cython.hpp $(INCFILES)
 	cython --cplus $<
 
-ch_vdif_assembler_cython.so: ch_vdif_assembler_cython.cpp libch_vdif_assembler.so
+ch_vdif_assembler_cython.so: ch_vdif_assembler_cython.cpp
 	$(CPP) -shared -o $@ $< -lch_vdif_assembler -lhdf5 -lpng
 
 install: $(INCFILES) $(BINFILES) $(LIBFILES) $(LIBCYTHON)

@@ -11,12 +11,12 @@
 #include <condition_variable>
 
 #include "vdif_assembler.hpp"
-using namespace std;
 
-assembled_chunk *c = new assembled_chunk(0);
-mutex mtx;
-condition_variable cv;
+namespace vdif_assembler{
 
+std::assembled_chunk *c = new assembled_chunk(0);
+std::mutex mtx;
+std::condition_variable cv;
 
 namespace constants{
 
@@ -52,7 +52,7 @@ vdif_processor::~vdif_processor(){
 }
 
 void vdif_processor::process_chunk(assembled_chunk *c) {
-	cout << c->t0 << endl;
+	std::cout << c->t0 << std::endl;
 	cout << "Processing chunk done." << endl;
 
 }
@@ -84,7 +84,7 @@ int vdif_assembler::register_processor(vdif_processor *p) {
 		number_of_processors++;
 		return 1;
 	} else {
-		cout << "The assembler is full, can't register any new processors." << endl;
+		std::cout << "The assembler is full, can't register any new processors." << std::endl;
 		return 0;
 	}
 }
@@ -99,7 +99,7 @@ int vdif_assembler::kill_processor(vdif_processor *p) {
 			return 1;
 		}
 	}
-	cout << "Unable to find this processor.";
+	std::cout << "Unable to find this processor.";
 	return 0;
 }
 
@@ -115,8 +115,8 @@ int vdif_assembler::is_full() {
 
 void vdif_assembler::run() {
 
-	thread assemble_t(&vdif_assembler::assemble_chunk, this);
-	thread net_t(&vdif_assembler::network_capture,this);
+	std::thread assemble_t(&vdif_assembler::assemble_chunk, this);
+	std::thread net_t(&vdif_assembler::network_capture,this);
 	net_t.join();
 	assemble_t.join();
 
@@ -129,13 +129,13 @@ void vdif_assembler::assemble_chunk() {
 
 	for (;;) {
 		//cout << " start: " << start_index << " end: " << end_index << endl;
-		unique_lock<mutex> lk(mtx);
+		std::unique_lock<mutex> lk(mtx);
 
 		if (bufsize < constants::chunk_size) {
 			cv.wait(lk);
 		}
 			
-		cout << "Chunk found" << endl;
+		std::cout << "Chunk found" << std::endl;
 			
 		c->t0 = header_buf[start_index].t0;
 		
@@ -172,23 +172,23 @@ void vdif_assembler::network_capture() {
 
 	int sock_fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 	if (sock_fd < 0) {
-		cout << "socket failed." << std::endl;
+		std::cout << "socket failed." << std::endl;
 	}
 	server_address.sin_family = AF_INET;
 	server_address.sin_port = htons(port);
 	server_address.sin_addr.s_addr = inet_addr("127.0.0.1");
 
 	if (bind(sock_fd, (struct sockaddr *) &server_address, sizeof(server_address)) < 0) {
-		cout << "bind failed." << std::endl;
+		std::cout << "bind failed." << std::endl;
 	}
 	for (;;) {
 		if (read(sock_fd, dgram, sizeof(dgram)) == size) {
-			unique_lock<mutex> lk(mtx);
+			std::unique_lock<mutex> lk(mtx);
 			if (!is_full()) {
 				vdif_read(dgram, size);
 			}
 			else {
-				cout << "Buffer is full. Dropping packets." << endl;
+				std::cout << "Buffer is full. Dropping packets." << std::endl;
 			}
 			lk.unlock();		
 		}
@@ -234,3 +234,11 @@ void vdif_assembler::vdif_read(unsigned char *data, int size) {
 	
 }
 
+void vdif_assembler::start_async(){
+	std::thread run_t(&vdif_assembler::run, this);
+	run_t.detach();
+}
+
+//TODO expand
+void vdif_assembler::wait_until_end(){}
+}

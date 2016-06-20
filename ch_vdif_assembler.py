@@ -28,28 +28,29 @@ class assembler:
 			self.python_processor = p 
 
 
+	#fix?
 	def run(self, stream):
 		if self.python_processor is None:
 			self._assembler.start_async()
 			self._assembler.wait_until_end()
 			return
 
-		self._assembler.register_python_processor()
+		# self._assembler.register_python_processor()
 
-		try:
-			self._assembler.start_async()
+		# try:
+		# 	self._assembler.start_async()
 		
-			while True:
-				chunk = self._assembler.get_next_python_chunk()
-				if chunk is None:
-					break
-				(t0, nt, efield, mask) = chunk.get_data()
-				self.python_processor.process_chunk(t0, nt, efield, mask)
+		# 	while True:
+		# 		chunk = self._assembler.get_next_python_chunk()
+		# 		if chunk is None:
+		# 			break
+		# 		(t0, nt, efield, mask) = chunk.get_data()
+		# 		self.python_processor.process_chunk(t0, nt, efield, mask)
 
-			self.python_processor.finalize()
+		# 	self.python_processor.finalize()
 
-		finally:
-			self._assembler.unregister_python_processor()
+		# finally:
+		# 	self._assembler.unregister_python_processor()
 
 		self._assembler.wait_until_end()
 

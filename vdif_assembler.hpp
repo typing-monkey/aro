@@ -1,16 +1,38 @@
 #include <iostream>
 #include <stdlib.h>
 
-using namespace std;
+#ifndef _unlikely
+#define _unlikely(cond)  (__builtin_expect(cond,0))
+#endif
+
+#ifndef xassert
+#define xassert(cond) xassert2(cond, __LINE__)
+#define xassert2(cond,line) \
+    do { \
+        if (_unlikely(!(cond))) { \
+	    const char *msg = "Assertion '" __STRING(cond) "' failed (" __FILE__ ":" __STRING(line) ")\n"; \
+	    std::cout << msg << std::flush; \
+	    throw std::runtime_error(msg); \
+	} \
+    } while (0)
+#endif
+
+namespace vdif_assembler{
 
 struct header {
 	long int t0;
 	int polarization;
 };
 
+struct noncopyable
+{
+    noncopyable() { }
+    noncopyable(const noncopyable &) = delete;
+    noncopyable& operator=(const noncopyable &) = delete;
+};
 
 struct assembled_chunk {
-
+	
 	long int t0;
 	unsigned char *data;
 
@@ -56,6 +78,8 @@ struct vdif_assembler {
 	void assemble_chunk();
 	int is_full();
 	void vdif_read(unsigned char *data, int size);
-
+	void wait_until_end();
+	void start_async();
 };
 
+}
