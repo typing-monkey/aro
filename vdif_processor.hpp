@@ -1,11 +1,13 @@
-#include "vdif_assembler.cpp"
 #include <string>
 #include <pthread.h>
 #include <iostream>
 
 namespace vdif_assembler {
 
-struct vdif_processor : noncopyable{
+struct assembler_chunk;
+struct noncopyable;
+
+struct vdif_processor{
 	std::string name;
 	bool runflag;
 	bool is_critical;
@@ -17,7 +19,7 @@ struct vdif_processor : noncopyable{
 
 	bool is_running();
 
-	void set_running()';
+	void set_running();
 	virtual void process_chunk(const std::shared_ptr<assembler_chunk> &a);
 	virtual void finalize();
 };

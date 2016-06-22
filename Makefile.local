@@ -7,7 +7,9 @@ LIBDIR=/usr/lib
 # Directory where C++ header files will be installed (e.g. ch_vdif_assembler.hpp)
 INCDIR=/usr/include
 
-INCDIR2=/usr/lib64/python2.7/site-packages/numpy/core/include
+# INCDIR2=/usr/lib64/python2.7/site-packages/numpy/core/include
+# INCDIR2=~/anaconda/lib/python2.7/site-packages/numpy/core/include
+INCDIR2=$(HOME)/anaconda/pkgs/numpy-1.9.2-py27_0/lib/python2.7/site-packages/numpy/core/include/
 
 # Directory where Python modules will be installed
 PYDIR=/usr/lib/python2.7/site-packages
@@ -15,4 +17,4 @@ PYDIR=/usr/lib/python2.7/site-packages
 # Read-only location of python header files, needed for cython (you'll probably need to substitute the path to your python installation, e.g. /usr/include/python2.7)
 PYTHON_INCDIR=/usr/include/python2.7
 
-CPP=g++ -O3 -march=native -std=c++0x -Wall -ffast-math -funroll-loops -fPIC -I$(INCDIR) -I$(INCDIR2) -I$(PYTHON_INCDIR) -L. -L$(LIBDIR) -lpthread
+CPP=g++ -O3 -march=native -std=c++0x -Wall -ffast-math -fpermissive -funroll-loops -fPIC -I$(INCDIR) -I$(INCDIR2) -I$(PYTHON_INCDIR) -L. -L$(LIBDIR) -pthread
