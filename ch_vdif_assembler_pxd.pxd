@@ -30,9 +30,13 @@ cdef extern from "ch_vdif_assembler_cython.hpp" namespace "vdif_assembler":
         #void unregister_python_processor() except +
         void start_async() except +
         void wait_until_end() except +
+# refactor
+#        cython_assembled_chunk *get_next_python_chunk() except +
 
-        cython_assembled_chunk *get_next_python_chunk() except +
-
+#cdef class processor_wrapper:
+#    cdef cpp_processor *p
+#    def __init__(self,proc)
+    #processor_wrapper(cpp_processor proc)
 
     # Factory functions
     #cython_stream *cython_file_stream(const vector[string] &filename_list) except +

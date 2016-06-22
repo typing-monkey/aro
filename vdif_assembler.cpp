@@ -12,28 +12,18 @@
 #include <condition_variable>
 
 #include "vdif_assembler.hpp"
-using namespace std;
 
-assembled_chunk *c = new assembled_chunk(0);
-mutex mtx;
-condition_variable cv;
+namespace vdif_assembler{
 
+assembled_chunk *c = new assembled_chunk(0,constants::num_time);
+std::mutex mtx;
+std::condition_variable cv;
 
-namespace constants{
-
-	const int nfreq = 1024;
-	const int header_size = 12; //int64 time + int32 thread ID
-	const int chunk_size = 65536;
-	const int max_processors = 10;
-	const int frame_per_second = 390625;
-	const int buffer_size = 524288; //at most 8 chunk in buffer
-
-}
-
-assembled_chunk::assembled_chunk(long int start_time) {
+assembled_chunk::assembled_chunk(long int start_time, int my_nt) {
 	
 	data = new unsigned char[constants::chunk_size * constants::nfreq];
 	t0 = start_time;
+	nt = my_nt;
 
 }
 
@@ -45,24 +35,17 @@ void assembled_chunk::set_data(int i, unsigned char x) {
 	data[i] = x;
 }
 
-vdif_processor::vdif_processor(){
-	is_alive = true;
-}
+// void vdif_processor::process_chunk(assembled_chunk *c) {
+// 	std::cout << c->t0 << std::endl;
+// 	this_thread::sleep_for(chrono::milliseconds(int(constants::chunk_size/2*2.56/1000)));
+// 	cout << "Processing chunk done." << endl;
 
-vdif_processor::~vdif_processor(){
-}
-
-void vdif_processor::process_chunk(assembled_chunk *c) {
-	cout << c->t0 << endl;
-	this_thread::sleep_for(chrono::milliseconds(int(constants::chunk_size/2*2.56/1000)));
-	cout << "Processing chunk done." << endl;
-
-}
+// }
 
 
-vdif_assembler::vdif_assembler(){
-	
-	processor_threads = new thread [constants::max_processors];
+vdif_assembler::vdif_assembler(short unsigned int my_port){
+	port = my_port;
+	processor_threads = new std::thread [constants::max_processors];
 	processors = new vdif_processor *[constants::max_processors];
 	number_of_processors = 0;
 	data_buf = new unsigned char[constants::buffer_size * constants::nfreq];
@@ -87,7 +70,7 @@ int vdif_assembler::register_processor(vdif_processor *p) {
 		number_of_processors++;
 		return 1;
 	} else {
-		cout << "The assembler is full, can't register any new processors." << endl;
+		std::cout << "The assembler is full, can't register any new processors." << std::endl;
 		return 0;
 	}
 }
@@ -102,7 +85,7 @@ int vdif_assembler::kill_processor(vdif_processor *p) {
 			return 1;
 		}
 	}
-	cout << "Unable to find this processor.";
+	std::cout << "Unable to find this processor.";
 	return 0;
 }
 
@@ -118,8 +101,8 @@ int vdif_assembler::is_full() {
 
 void vdif_assembler::run() {
 
-	thread assemble_t(&vdif_assembler::assemble_chunk, this);
-	thread net_t(&vdif_assembler::network_capture,this);
+	std::thread assemble_t(&vdif_assembler::assemble_chunk, this);
+	std::thread net_t(&vdif_assembler::network_capture,this);
 	net_t.join();
 	assemble_t.join();
 
@@ -131,15 +114,15 @@ void vdif_assembler::assemble_chunk() {
 
 
 	for (;;) {
-		
-		unique_lock<mutex> lk(mtx);
+		//cout << " start: " << start_index << " end: " << end_index << endl;
+		std::unique_lock<std::mutex> lk(mtx);
 
 		if (bufsize < constants::chunk_size) {
 			cv.wait(lk);
 		}
 			
-		cout << "Chunk found" << endl;
-		//cout << "start: " << start_index << " end: " << end_index << endl;	
+		std::cout << "Chunk found" << std::endl;
+		//cout << "start: " << start_index << " end: " << end_index << endl;
 		c->t0 = header_buf[start_index].t0;
 		
 		for (int i = 0; i < constants::chunk_size * constants::nfreq; i++) {
@@ -148,7 +131,7 @@ void vdif_assembler::assemble_chunk() {
 		start_index += constants::chunk_size;
 
 		bufsize -= constants::chunk_size;
-		cout << "excess: " << bufsize << endl;
+		std::cout << "excess: " << bufsize << std::endl;
 		lk.unlock();
 
 		if (start_index >= constants::buffer_size) {
@@ -156,7 +139,7 @@ void vdif_assembler::assemble_chunk() {
 		}
 
 		for (int i = 0; i < number_of_processors; i++) {
-			processor_threads[i]= thread(&vdif_processor::process_chunk,processors[i],c);
+			processor_threads[i]=std::thread(&vdif_processor::process_chunk,processors[i],c);
 		}
 		for (int i = 0; i < number_of_processors; i++) {
 			processor_threads[i].join();
@@ -169,7 +152,6 @@ void vdif_assembler::assemble_chunk() {
 
 void vdif_assembler::network_capture() {
 
-	short unsigned int port = 10050;
 	int size = 1056 * 32;
 
 	unsigned char dgram[size];
@@ -179,23 +161,23 @@ void vdif_assembler::network_capture() {
 
 	int sock_fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 	if (sock_fd < 0) {
-		cout << "socket failed." << std::endl;
+		std::cout << "socket failed." << std::endl;
 	}
 	server_address.sin_family = AF_INET;
 	server_address.sin_port = htons(port);
 	server_address.sin_addr.s_addr = inet_addr("127.0.0.1");
 
 	if (bind(sock_fd, (struct sockaddr *) &server_address, sizeof(server_address)) < 0) {
-		cout << "bind failed." << std::endl;
+		std::cout << "bind failed." << std::endl;
 	}
 	for (;;) {
 		if (read(sock_fd, dgram, sizeof(dgram)) == size) {
-			unique_lock<mutex> lk(mtx);
+			std::unique_lock<std::mutex> lk(mtx);
 			if (!is_full()) {
 				vdif_read(dgram, size);
 			}
 			else {
-				cout << "Buffer is full. Dropping packets." << endl;
+				std::cout << "Buffer is full. Dropping packets." << std::endl;
 			}
 			lk.unlock();		
 		}
@@ -242,3 +224,46 @@ void vdif_assembler::vdif_read(unsigned char *data, int size) {
 	
 }
 
+void vdif_assembler::start_async(){
+	std::thread run_t(&vdif_assembler::run, this);
+	run_t.detach();
+}
+
+//TODO expand
+void vdif_assembler::wait_until_end(){}
+
+
+vdif_processor::vdif_processor(const std::string &name_, bool is_critical_=false){
+	name = name_;
+	is_critical = is_critical_;
+	runflag = false;
+	pthread_mutex_init(&mutex, NULL);
+}
+
+vdif_processor::~vdif_processor(){
+
+}
+
+bool vdif_processor::is_running(){
+	pthread_mutex_lock(&mutex);
+	bool ret = runflag;
+	pthread_mutex_unlock(&mutex);
+
+	return ret;
+}
+void vdif_processor::set_running(){
+	pthread_mutex_lock(&mutex);
+
+	if (runflag) {
+	pthread_mutex_unlock(&mutex);
+
+	//FIX
+	//throw_rerun_exception();
+	}
+
+	runflag = true;
+	pthread_mutex_unlock(&mutex);
+}
+// void vdif_processor::process_chunk(const std::shared_ptr<assembled_chunk> &a) = 0;
+// void vdif_processor::finalize() = 0;
+}
