@@ -1,46 +1,40 @@
-#include "vdif_assembler.cpp"
 #include <string>
 #include <pthread.h>
 #include <iostream>
 
 namespace vdif_assembler {
 
-struct vdif_processor : noncopyable{
-	std::string name;
-	bool runflag;
-	bool is_critical;
-	pthread_mutex_t mutex;
+vdif_processor::vdif_processor(const std::string &name_, bool is_critical_=false){
+	name = name_;
+	is_critical = is_critical_;
+	runflag(false);
+	pthread_mutex_init(&mutex, NULL);
+}
 
-	vdif_processor(const std::string &name_, bool is_critical_=false)
-	: name(name_), is_critical(is_critical_), runflag(false){
-		pthread_mutex_init(&mutex, NULL);
+vdif_processor::~vdif_processor(){
+
+}
+
+bool vdif_processor::is_running(){
+	pthread_mutex_lock(&mutex);
+	bool ret = runflag;
+	pthread_mutex_unlock(&mutex);
+
+	return ret;
+}
+void vdif_processor::set_running(){
+	pthread_mutex_lock(&mutex);
+
+	if (runflag) {
+	pthread_mutex_unlock(&mutex);
+	throw_rerun_exception();
 	}
 
-	//FIX?
-	virtual ~vdif_processor(){}
-
-	bool is_running(){
-		pthread_mutex_lock(&mutex);
-		bool ret = runflag;
-		pthread_mutex_unlock(&mutex);
-
-		return ret;
-	}
-
-	void set_running(){
-		pthread_mutex_lock(&mutex);
-
-		if (runflag) {
-		pthread_mutex_unlock(&mutex);
-		throw_rerun_exception();
-		}
-
-		runflag = true;
-		pthread_mutex_unlock(&mutex);
-	}
-	virtual void process_chunk(const std::shared_ptr<assembler_chunk> &a) = 0;
-	virtual void finalize() = 0;
-};
+	runflag = true;
+	pthread_mutex_unlock(&mutex);
+}
+virtual void vdif_processor::process_chunk(const std::shared_ptr<assembled_chunk> &a) = 0;
+virtual void vdif_processor::finalize() = 0;
 	
 // processor_handle::processor_handle(const string &name_, const shared_ptr<assembler_nerve_center> &nc_)
 //     : name(name_), nc(nc_),

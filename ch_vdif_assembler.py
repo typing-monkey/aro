@@ -9,11 +9,11 @@ import ch_vdif_assembler_cython
 class constants:
 	chime_nfreq = ch_vdif_assembler_cython.chime_nfreq
 	timestamps_per_frame = ch_vdif_assembler_cython.timestamps_per_frame
-	num_disks = ch_vdif_assembler_cython.num_disks
+	#num_disks = ch_vdif_assembler_cython.num_disks
 
 
 class assembler:
-	def __init__(self, port=1000, write_to_disk=False, rbuf_size=constants.num_disks, abuf_size=4, assembler_nt=65536):
+	def __init__(self, port=1000, write_to_disk=False, rbuf_size=0, abuf_size=4, assembler_nt=65536):
 		self._assembler = ch_vdif_assembler_cython.assembler(write_to_disk, rbuf_size, abuf_size, assembler_nt, port)
 		self.python_processor = None
 

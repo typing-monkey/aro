@@ -22,28 +22,30 @@ namespace vdif_assembler {
 // };
 
 struct base_python_processor: public vdif_processor {
-	void* python_callback;
-	base_python_processor(char* name, void* python_callback_) : vdif_processor(name){
+	std::function<void(assembled_chunk*)> python_callback;
+	base_python_processor(char* name, std::function<void(assembled_chunk*)> python_callback_) : vdif_processor(name){
 		python_callback = python_callback_;
 	}
 	void initialize(){}
-	void process_chunk(const std::shared_ptr<assembled_chunk> &a) {
-		python_callback(a)
+	void process_chunk(const assembled_chunk* a) {
+		python_callback(a);
 	}
 	void finalize(){}
 };
 
 struct cpp_processor {
-	vdif_processor p;
-	cpp_processor(const vdif_processor* &p_) : p(p_) { xassert(p); }
+	vdif_processor* p;
+	cpp_processor(const vdif_processor* p_){
+		p = p_;
+	}
 };
 
 struct cython_assembled_chunk {
-	std::shared_ptr<assembled_chunk> p;
+	assembled_chunk* p;
 	int64_t t0;
 	int nt;
 
-	cython_assembled_chunk(const std::shared_ptr<assembled_chunk> &p_) 
+	cython_assembled_chunk(const assembled_chunk* p_) 
 	: p(p_) 
 	{
 	xassert(p);
@@ -71,9 +73,9 @@ struct cython_assembler {
 
 	void register_cpp_processor(cpp_processor *processor)
 	{
-	xassert(processor);
-	xassert(processor->p);
-	a.register_processor(&(processor->p));
+	//xassert(processor);
+	//xassert(processor->p);
+	a.register_processor(processor->p);
 	}
 
 	// void register_python_processor()

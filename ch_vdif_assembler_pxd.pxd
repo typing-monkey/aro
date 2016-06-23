@@ -7,6 +7,7 @@ cimport numpy as np
 
 cdef extern from "vdif_assembler.cpp" namespace "vdif_assembler::constants":
         int nfreq
+        int num_time
 
 cdef extern from "ch_vdif_assembler_cython.hpp" namespace "vdif_assembler":
     cdef cppclass cython_stream:
@@ -20,7 +21,6 @@ cdef extern from "ch_vdif_assembler_cython.hpp" namespace "vdif_assembler":
         int nt
 
         void fill_efield(uint8_t *efield, int32_t *mask) except +
-
 
     cdef cppclass cython_assembler:
         cython_assembler(bool write_to_disk, int rbuf_size, int abuf_size, int assembler_nt, int port) except +

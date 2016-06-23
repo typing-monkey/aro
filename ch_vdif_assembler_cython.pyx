@@ -1,20 +1,24 @@
-from libc.stdint cimport int32_t, int64_t
-from libcpp.vector cimport vector
-from libcpp cimport bool
-
 from multiprocessing import Process
+
+from libcpp cimport bool
+from libcpp.string cimport string
+from libcpp.vector cimport vector
 
 import numpy as np
 cimport numpy as np
 
 cimport ch_vdif_assembler_pxd
+
+#from ch_vdif_assembler_pxd cimport nfreq, num_time, cython_assembled_chunk, cython_assembler, cpp_processor
 #from ch_vdif_assembler_pxd cimport cpp_processor
 #from ch_vdif_assembler_pxd cimport processor_wrapper
 
 ##############################################  Constants  #########################################
 
-chime_nfreq = ch_vdif_assembler_pxd.chime_nfreq
-timestamps_per_frame = ch_vdif_assembler_pxd.timestamps_per_frame
+chime_nfreq = ch_vdif_assembler_pxd.nfreq
+timestamps_per_frame = ch_vdif_assembler_pxd.num_time
+#chime_nfreq = ch_vdif_assembler_pxd
+#timestamps_per_frame = ch_vdif_assembler_pxd.timestamps_per_frame
 #num_disks = ch_vdif_assembler_pxd.num_disks
 
 ############################################  cpp_processor  #######################################

@@ -1,5 +1,11 @@
+#pragma once
 #include <iostream>
 #include <stdlib.h>
+//#include "vdif_processor.hpp"
+
+#include "emmintrin.h"
+#include "tmmintrin.h"
+#include "smmintrin.h"
 
 #ifndef _unlikely
 #define _unlikely(cond)  (__builtin_expect(cond,0))
@@ -8,16 +14,30 @@
 #ifndef xassert
 #define xassert(cond) xassert2(cond, __LINE__)
 #define xassert2(cond,line) \
-    do { \
-        if (_unlikely(!(cond))) { \
-	    const char *msg = "Assertion '" __STRING(cond) "' failed (" __FILE__ ":" __STRING(line) ")\n"; \
-	    std::cout << msg << std::flush; \
-	    throw std::runtime_error(msg); \
+	do { \
+		if (_unlikely(not cond)) { \
+		const char *msg = "Assertion '" __STRING(cond) "' failed (" __FILE__ ":" __STRING(line) ")\n"; \
+		std::cout << msg << std::flush; \
+		throw std::runtime_error(msg); \
 	} \
-    } while (0)
+	} while (0)
 #endif
 
+
+
 namespace vdif_assembler{
+
+namespace constants{
+
+	const int nfreq = 1024;
+	const int header_size = 12; //int64 time + int32 thread ID
+	const int chunk_size = 65536;
+	const int num_time = 1024;
+	const int max_processors = 10;
+	const int frame_per_second = 390625;
+	const int buffer_size = 524288; //at most 8 chunk in buffer
+
+};
 
 struct header {
 	long unsigned int t0;
@@ -26,48 +46,72 @@ struct header {
 
 struct noncopyable
 {
-    noncopyable() { }
-    noncopyable(const noncopyable &) = delete;
-    noncopyable& operator=(const noncopyable &) = delete;
+	noncopyable() { }
+	noncopyable(const noncopyable &) = delete;
+	noncopyable& operator=(const noncopyable &) = delete;
 };
 
 struct assembled_chunk {
 	long unsigned int t0;
+	int nt;
 	unsigned char *data;
+	char* buf;
 
-	assembled_chunk(long int t0);
+	assembled_chunk(long int t0,int nt);
 
 	~assembled_chunk();
 
 	void set_data(int i, unsigned char x);
 
+	inline void fill_efield_array_reference(std::uint8_t *efield, int *mask)
+	{
+	int arr_size = constants::nfreq * 2 * this->nt;
+
+	for (int i = 0; i < arr_size; i++) {
+		if (buf[i] != 0) {
+		//offset_decode(re, im, buf[i]);
+		efield[i] = buf[i];
+		mask[i] = 1;
+		}
+		else {
+		efield[i] = 0;
+		mask[i] = 0;
+		}
+	}
+	}
 };
 
+struct vdif_processor{
+	std::string name;
+	bool runflag;
+	bool is_critical;
+	pthread_mutex_t mutex;
 
-struct vdif_processor {
+	vdif_processor(const std::string &name_, bool is_critical_=false);
 
-	bool is_alive;
-	vdif_processor();
-	~vdif_processor();
-	void process_chunk(assembled_chunk *c);
+	virtual ~vdif_processor();
 
+	bool is_running();
+
+	void set_running();
+	virtual void process_chunk(const assembled_chunk* a) = 0;
+	virtual void finalize() = 0;
 };
-
-
 
 struct vdif_assembler {
 
 	int number_of_processors;
 	int start_index, end_index;
 	int bufsize;
+	short unsigned int port;
 
 	unsigned char *data_buf;
 	struct header *header_buf;
 
 	vdif_processor **processors;
-	thread *processor_threads;
+	std::thread *processor_threads;
 	
-	vdif_assembler();
+	vdif_assembler(short unsigned int port);
 
 	~vdif_assembler();
 
@@ -81,5 +125,53 @@ struct vdif_assembler {
 	void wait_until_end();
 	void start_async();
 };
+
+inline void _sum16_auto_correlations(int &sum, int &count, const uint8_t *buf)
+{
+    __m128i x = _mm_loadu_si128(reinterpret_cast<const __m128i *> (buf));
+    __m128i mask_invalid = _mm_cmpeq_epi8(x, _mm_set1_epi8(0));
+    
+    // take "horizontal" sum of mask to get the count
+    __m128i s = _mm_andnot_si128(mask_invalid, _mm_set1_epi8(1));
+    s = _mm_add_epi8(s, _mm_srli_si128(s,1));
+    s = _mm_add_epi8(s, _mm_srli_si128(s,2));
+    s = _mm_add_epi8(s, _mm_srli_si128(s,4));
+    s = _mm_add_epi8(s, _mm_srli_si128(s,8));
+    count = _mm_extract_epi8(s, 0);
+
+    // replace invalid bytes by 0x88
+    x = _mm_andnot_si128(mask_invalid, x);
+    x = _mm_or_si128(x, _mm_and_si128(mask_invalid, _mm_set1_epi8(0x88)));
+
+    // Each of the next 4 stanzas computes eight 16-bit numbers
+
+    __m128i xim_lo = _mm_and_si128(x, _mm_set1_epi16(0x000f));
+    xim_lo = _mm_sub_epi16(xim_lo, _mm_set1_epi16(0x0008));
+    __m128i xim2_lo = _mm_mullo_epi16(xim_lo, xim_lo);
+
+    __m128i xim_hi = _mm_and_si128(x, _mm_set1_epi16(0x0f00));
+    xim_hi = _mm_sub_epi16(xim_hi, _mm_set1_epi16(0x0800));
+    __m128i xim2_hi = _mm_mulhi_epi16(xim_hi, xim_hi);
+
+    __m128i xre_lo = _mm_and_si128(x, _mm_set1_epi16(0x00f0));
+    xre_lo = _mm_srli_epi16(xre_lo, 4);
+    xre_lo = _mm_sub_epi16(xre_lo, _mm_set1_epi16(0x0008));
+    __m128i xre2_lo = _mm_mullo_epi16(xre_lo, xre_lo);
+
+    __m128i xre_hi = _mm_and_si128(x, _mm_set1_epi16(0xf000));
+    xre_hi = _mm_srli_epi16(xre_hi, 12);
+    xre_hi = _mm_sub_epi16(xre_hi, _mm_set1_epi16(0x0008));
+    __m128i xre2_hi = _mm_mullo_epi16(xre_hi, xre_hi);
+
+    __m128i xim2 = _mm_add_epi16(xim2_lo, xim2_hi);
+    __m128i xre2 = _mm_add_epi16(xre2_lo, xre2_hi);
+    __m128i x2 = _mm_add_epi16(xre2, xim2);
+
+    // "horizontal" sum of 8 16-bit integers
+    x2 = _mm_add_epi16(x2, _mm_srli_si128(x2,2));
+    x2 = _mm_add_epi16(x2, _mm_srli_si128(x2,4));
+    x2 = _mm_add_epi16(x2, _mm_srli_si128(x2,8));
+    sum = _mm_extract_epi16(x2, 0);
+}
 
 }
