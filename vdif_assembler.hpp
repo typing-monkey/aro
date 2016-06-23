@@ -52,6 +52,7 @@ struct noncopyable
 };
 
 struct assembled_chunk {
+
 	long unsigned int t0;
 	int nt;
 	unsigned char *data;
@@ -119,11 +120,11 @@ struct vdif_assembler {
 	int kill_processor(vdif_processor *p);
 	void run();
 	void network_capture();
+	void read_from_disk();
 	void assemble_chunk();
 	int is_full();
 	void vdif_read(unsigned char *data, int size);
-	void wait_until_end();
-	void start_async();
+
 };
 
 inline void _sum16_auto_correlations(int &sum, int &count, const uint8_t *buf)

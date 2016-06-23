@@ -7,9 +7,12 @@ INCFILES= vdif_assembler.hpp
 LIBCYTHON=ch_vdif_assembler_cython.so
 PYMODULES=ch_vdif_assembler.py
 
+OFILES=
+
 # vdif_reader: vdif_reader.cpp vdif_reader.hpp data_process.cpp
 # 	$(CC) -o vdif_reader vdif_reader.cpp
 #all: $(BINFILES) $(LIBFILES) $(LIBCYTHON) $(TESTBINFILES)
+
 all: $(BINFILES) $(LIBCYTHON) $(TESTBINFILES)
 
 cython: $(LIBCYTHON)
