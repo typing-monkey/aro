@@ -52,6 +52,15 @@ cdef class cpp_processor:
 			del self.p
 			self.p = NULL
 
+cdef class python_processor:
+	cdef ch_vdif_assembler_pxd.base_python_processor p*
+
+	def __init__(self):
+		self.p = &(new ch_vdif_assembler_pxd.base_python_processor("python processor", <void*>self.process_chunk))
+
+	def process_chunk(self, t0, nt, efield, mask):
+		pass
+
 ##############################################  Assembler  #########################################
 
 

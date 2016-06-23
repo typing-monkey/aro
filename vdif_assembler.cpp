@@ -12,34 +12,14 @@
 #include <condition_variable>
 
 #include "vdif_assembler.hpp"
-using namespace std;
 
-assembled_chunk *c = new assembled_chunk(0);
-mutex mtx;
-condition_variable cv;
-
-<<<<<<< HEAD
+namespace vdif_assembler
+{
 assembled_chunk *c = new assembled_chunk(0,constants::num_time);
 std::mutex mtx;
 std::condition_variable cv;
 
 assembled_chunk::assembled_chunk(long int start_time, int my_nt) {
-=======
-
-namespace constants{
-
-	const int nfreq = 1024;
-	const int header_size = 12; //int64 time + int32 thread ID
-	const int chunk_size = 65536;
-	const int max_processors = 10;
-	const int frame_per_second = 390625;
-	const int buffer_size = 524288; //at most 8 chunk in buffer
-	const int packets_per_file = 131072;
-
-}
-
-assembled_chunk::assembled_chunk(long int start_time) {
->>>>>>> 73137b4889cb0d6baf5021393aa2b9eb8e53b916
 	
 	data = new unsigned char[constants::chunk_size * constants::nfreq];
 	t0 = start_time;
@@ -55,30 +35,9 @@ void assembled_chunk::set_data(int i, unsigned char x) {
 	data[i] = x;
 }
 
-// void vdif_processor::process_chunk(assembled_chunk *c) {
-// 	std::cout << c->t0 << std::endl;
-// 	this_thread::sleep_for(chrono::milliseconds(int(constants::chunk_size/2*2.56/1000)));
-// 	cout << "Processing chunk done." << endl;
-
-// }
-
-<<<<<<< HEAD
-
 vdif_assembler::vdif_assembler(short unsigned int my_port){
 	port = my_port;
 	processor_threads = new std::thread [constants::max_processors];
-=======
-void vdif_processor::process_chunk(assembled_chunk *c) {
-	cout << c->t0 << endl;
-	cout << "Processing chunk done." << endl;
-
-}
-
-
-vdif_assembler::vdif_assembler(){
-
->>>>>>> 73137b4889cb0d6baf5021393aa2b9eb8e53b916
-	processors = new vdif_processor *[constants::max_processors];
 	number_of_processors = 0;
 	data_buf = new unsigned char[constants::buffer_size * constants::nfreq];
 	header_buf = new struct header[constants::buffer_size];
@@ -149,13 +108,8 @@ void vdif_assembler::assemble_chunk() {
 
 	for (;;) {
 		//cout << " start: " << start_index << " end: " << end_index << endl;
-<<<<<<< HEAD
 		std::unique_lock<std::mutex> lk(mtx);
 
-=======
-		unique_lock<mutex> lk(mtx);
-		
->>>>>>> 73137b4889cb0d6baf5021393aa2b9eb8e53b916
 		if (bufsize < constants::chunk_size) {
 			cv.wait(lk);
 		}
@@ -170,26 +124,18 @@ void vdif_assembler::assemble_chunk() {
 		start_index += constants::chunk_size;
 
 		bufsize -= constants::chunk_size;
-<<<<<<< HEAD
 		std::cout << "excess: " << bufsize << std::endl;
 		lk.unlock();
 
-=======
-		
->>>>>>> 73137b4889cb0d6baf5021393aa2b9eb8e53b916
 		if (start_index >= constants::buffer_size) {
 			start_index -= constants::buffer_size;
 		}	
 
 		for (int i = 0; i < number_of_processors; i++) {
-<<<<<<< HEAD
 			processor_threads[i]=std::thread(&vdif_processor::process_chunk,processors[i],c);
 		}
 		for (int i = 0; i < number_of_processors; i++) {
 			processor_threads[i].join();
-=======
-			processors[i]->process_chunk(c);
->>>>>>> 73137b4889cb0d6baf5021393aa2b9eb8e53b916
 		}
 
 		lk.unlock();
@@ -220,11 +166,7 @@ void vdif_assembler::network_capture() {
 	}
 	for (;;) {
 		if (read(sock_fd, dgram, sizeof(dgram)) == size) {
-<<<<<<< HEAD
 			std::unique_lock<std::mutex> lk(mtx);
-=======
-			unique_lock<mutex> lk(mtx);
->>>>>>> 73137b4889cb0d6baf5021393aa2b9eb8e53b916
 			if (!is_full()) {
 				vdif_read(dgram, size);
 			}
@@ -249,7 +191,7 @@ void vdif_assembler::read_from_disk() {
 		bytes_read = 0;
 		FILE *fp = fopen(filename.c_str(), "r");
                 if (!fp) {
-                        cout << "can't open " << filename << endl;
+                       std::cout << "can't open " << filename << std::endl;
                       	continue; 
                 }
 		cout << "Reading " << filename << endl;
@@ -300,7 +242,6 @@ void vdif_assembler::vdif_read(unsigned char *data, int size) {
 
 		//cout << "start: " << start_index << " end: " << end_index << " size: " << bufsize << endl;
 	}
-<<<<<<< HEAD
 	
 }
 
@@ -344,6 +285,4 @@ void vdif_processor::set_running(){
 	runflag = true;
 	pthread_mutex_unlock(&mutex);
 }
-=======
->>>>>>> 73137b4889cb0d6baf5021393aa2b9eb8e53b916
 }
