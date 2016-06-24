@@ -73,7 +73,7 @@ struct cython_assembler {
 	vdif_assembler a;
 
 	cython_assembler(bool write_to_disk, int rbuf_size, int abuf_size, int assembler_nt, int port)
-	: a(port)
+	: a("network","10050")
 	{ }
 
 	void register_cpp_processor(cpp_processor *processor)

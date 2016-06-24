@@ -68,7 +68,7 @@ struct assembled_chunk {
 	long unsigned int t0;
 	int nt;
 	unsigned char *data;
-	char* buf;
+	//char* buf;
 
 	assembled_chunk(long int t0,int nt);
 
@@ -81,9 +81,9 @@ struct assembled_chunk {
 	int arr_size = constants::nfreq * 2 * this->nt;
 
 	for (int i = 0; i < arr_size; i++) {
-		if (buf[i] != 0) {
+		if (data[i] != 0) {
 		//offset_decode(re, im, buf[i]);
-		efield[i] = buf[i];
+		efield[i] = data[i];
 		mask[i] = 1;
 		}
 		else {
@@ -116,15 +116,19 @@ struct vdif_assembler {
 	int number_of_processors;
 	int start_index, end_index;
 	int bufsize;
-	short unsigned int port;
+	int port;
+	std::string source;
+	char* filelist_name;
 
+	unsigned char *temp_buf;
 	unsigned char *data_buf;
 	struct header *header_buf;
+	std::queue<assembled_chunk*> chunks;
 
 	vdif_processor **processors;
 	std::thread *processor_threads;
 	
-	vdif_assembler(short unsigned int port);
+	vdif_assembler(const char*arg1, const char *arg2);
 
 	~vdif_assembler();
 
@@ -135,9 +139,11 @@ struct vdif_assembler {
 	void read_from_disk();
 	void assemble_chunk();
 	int is_full();
+	assembled_chunk* get_chunk();
 	void vdif_read(unsigned char *data, int size);
 	void wait_until_end();
 	void start_async();
+	void fill_missing(int n);
 
 };
 

@@ -16,13 +16,11 @@
 namespace aro_vdif_assembler
 {
 
-using namespace std;
-
 std::mutex mtx;
-condition_variable cv;
+std::condition_variable cv;
 
 
-std::namespace constants{
+namespace constants{
 
 	const int nfreq = 1024;
 	const int header_size = 12; //int64 time + int32 thread ID
@@ -66,6 +64,7 @@ vdif_assembler::vdif_assembler(const char *arg1, const char *arg2){
 		exit(1);
 	}
 
+	nt = chunk_size/2;
 	processors = new vdif_processor *[constants::max_processors];
 	number_of_processors = 0;
 	data_buf = new unsigned char[constants::buffer_size * constants::nfreq];
@@ -144,14 +143,8 @@ void vdif_assembler::assemble_chunk() {
 			cv.wait(lk);
 		}
 
-<<<<<<< HEAD:aro_vdif_assembler.cpp
 		std::cout << "Chunk found" << std::endl;
-			
-		c->t0 = header_buf[start_index].t0;
-=======
-		cout << "Chunk found" << endl;
-		assembled_chunk c(header_buf[end_index].t0);	
->>>>>>> Fri:aro_vdif_assembler.cpp
+		assembled_chunk c(header_buf[end_index].t0);
 		
 		for (int i = 0; i < constants::chunk_size * constants::nfreq; i++) {
 			c.set_data(i, data_buf[start_index+i]);
@@ -162,25 +155,8 @@ void vdif_assembler::assemble_chunk() {
 		start_index = (start_index + constants::chunk_size) % constants::buffer_size;
 
 		bufsize -= constants::chunk_size;
-<<<<<<< HEAD:aro_vdif_assembler.cpp
-		std::cout << "excess: " << bufsize << std::endl;
-		lk.unlock();
-
-		if (start_index >= constants::buffer_size) {
-			start_index -= constants::buffer_size;
-		}	
-
-		for (int i = 0; i < number_of_processors; i++) {
-			processor_threads[i]=std::thread(&vdif_processor::process_chunk,processors[i],c);
-		}
-		for (int i = 0; i < number_of_processors; i++) {
-			processor_threads[i].join();
-		}
-=======
 	
 		cout << "excess: " << bufsize << endl;
-		
->>>>>>> Fri:aro_vdif_assembler.cpp
 
 		lk.unlock();
 		
