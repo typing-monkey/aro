@@ -37,11 +37,7 @@ class assembler:
 		# 	return
 		self._assembler.start_async()
 		while True:
-			this_chunk = self._assembler.get_chunk()
-			t0 = this_chunk.t0
-			nt = this_chunk.nt
-			efield = this_chunk.efield
-			mask = this_chunk.mask
+			(t0,nt,efield,mask) = self._assembler.get_chunk().get_data()
 			self.python_processor.process_chunk(t0,nt,efield,mask)
 
 		# self._assembler.register_python_processor()
