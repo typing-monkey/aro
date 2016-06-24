@@ -18,5 +18,5 @@ PYDIR=/usr/lib/python2.7/site-packages
 # Read-only location of python header files, needed for cython (you'll probably need to substitute the path to your python installation, e.g. /usr/include/python2.7)
 PYTHON_INCDIR=/usr/include/python2.7
 
-CPP=g++ -O3 -march=native -std=c++0x -Wall -ffast-math -fpermissive -funroll-loops -fPIC -I$(INCDIR) -I$(INCDIR2) -I$(PYTHON_INCDIR) -L. -L$(LIBDIR) -pthread
+CPP=g++ -O3 -march=native -std=c++0x -Wall -ffast-math -funroll-loops -fpermissive -fPIC -I$(INCDIR) -I$(INCDIR2) -I$(PYTHON_INCDIR) -L. -L$(LIBDIR) -lpthread
 

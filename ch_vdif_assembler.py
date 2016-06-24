@@ -6,6 +6,8 @@ import numpy as np
 
 import ch_vdif_assembler_cython
 
+from ch_vdif_assembler_cython import cpp_python_processor
+
 class constants:
 	chime_nfreq = ch_vdif_assembler_cython.chime_nfreq
 	timestamps_per_frame = ch_vdif_assembler_cython.timestamps_per_frame
@@ -25,15 +27,22 @@ class assembler:
 		elif self.python_processor is not None:
 			raise RuntimeError('Currently, ch_vdif_assembler only allows registering one python processor (but an arbitrary number of C++ processors)')
 		else:
-			self.python_processor = p 
-
+			self.python_processor = p
 
 	#fix?
 	def run(self, stream):
-		if self.python_processor is None:
-			self._assembler.start_async()
-			self._assembler.wait_until_end()
-			return
+		# if self.python_processor is None:
+		# 	self._assembler.start_async()
+		# 	self._assembler.wait_until_end()
+		# 	return
+		self._assembler.start_async()
+		while True:
+			this_chunk = self._assembler.get_chunk()
+			t0 = this_chunk.t0
+			nt = this_chunk.nt
+			efield = this_chunk.efield
+			mask = this_chunk.mask
+			self.python_processor.process_chunk(t0,nt,efield,mask)
 
 		# self._assembler.register_python_processor()
 
@@ -72,11 +81,23 @@ class processor:
 	 happens all the time.  If a GPU correlator node is down, which is a frequent occurrence, 
 	 then some frequencies will be "all missing".  There are also routine packet loss events 
 	 on second-timescales which result in some high-speed samples being flagged as missing data.
-	 """
-
+	 """	
 	def process_chunk(self, t0, nt, efield, mask):
 		print 'process_chunk called! t0=%s nt=%s efield (%s,%s) mask (%s,%s)' % (t0, nt, efield.dtype, efield.shape, mask.dtype, mask.shape)
 
+
+
 	def finalize(self):
 		pass
+
+# class singleton_python_processor(processor):
+# 	self._assembler
+# 	def __init__(self,py_assembler):
+# 		self._assembler = py_assembler
+# 		#self.cpp_processor = py_assembler.get_python_processor()
+# 	def get_and_process_chunk():
+# 		chunk = self._assembler.get_chunk()
+
+
+
 

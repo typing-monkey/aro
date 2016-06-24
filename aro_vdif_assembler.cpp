@@ -11,9 +11,9 @@
 #include <mutex>
 #include <condition_variable>
 
-#include "vdif_assembler.hpp"
+#include "aro_vdif_assembler.hpp"
 
-namespace vdif_assembler
+namespace aro_vdif_assembler
 {
 assembled_chunk *c = new assembled_chunk(0,constants::num_time);
 std::mutex mtx;
@@ -61,7 +61,7 @@ int vdif_assembler::register_processor(vdif_processor *p) {
 		number_of_processors++;
 		return 1;
 	} else {
-		cout << "The assembler is full, can't register any new processors." << endl;
+		std::cout << "The assembler is full, can't register any new processors." << std::endl;
 		return 0;
 	}
 }
@@ -76,7 +76,7 @@ int vdif_assembler::kill_processor(vdif_processor *p) {
 			return 1;
 		}
 	}
-	cout << "Unable to find this processor.";
+	std::cout << "Unable to find this processor.";
 	return 0;
 }
 
@@ -92,9 +92,9 @@ int vdif_assembler::is_full() {
 
 void vdif_assembler::run() {
 
-	thread assemble_t(&vdif_assembler::assemble_chunk, this);
+	std::thread assemble_t(&vdif_assembler::assemble_chunk, this);
 	//thread net_t(&vdif_assembler::network_capture,this);
-	thread disk_t(&vdif_assembler::read_from_disk,this);
+	std::thread disk_t(&vdif_assembler::read_from_disk,this);
 	disk_t.join();
 	//net_t.join();
 	assemble_t.join();
@@ -114,7 +114,7 @@ void vdif_assembler::assemble_chunk() {
 			cv.wait(lk);
 		}
 
-		cout << "Chunk found" << endl;
+		std::cout << "Chunk found" << std::endl;
 			
 		c->t0 = header_buf[start_index].t0;
 		
@@ -155,14 +155,14 @@ void vdif_assembler::network_capture() {
 
 	int sock_fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 	if (sock_fd < 0) {
-		cout << "socket failed." << std::endl;
+		std::cout << "socket failed." << std::endl;
 	}
 	server_address.sin_family = AF_INET;
 	server_address.sin_port = htons(port);
 	server_address.sin_addr.s_addr = inet_addr("127.0.0.1");
 
 	if (bind(sock_fd, (struct sockaddr *) &server_address, sizeof(server_address)) < 0) {
-		cout << "bind failed." << std::endl;
+		std::cout << "bind failed." << std::endl;
 	}
 	for (;;) {
 		if (read(sock_fd, dgram, sizeof(dgram)) == size) {
@@ -171,19 +171,20 @@ void vdif_assembler::network_capture() {
 				vdif_read(dgram, size);
 			}
 			else {
-				cout << "Buffer is full. Dropping packets." << endl;
+				std::cout << "Buffer is full. Dropping packets." << std::endl;
 			}
 			lk.unlock();		
 		}
 	}
 
 }
-unsigned char file_data[constants::packets_per_file*1056];
+
 
 void vdif_assembler::read_from_disk() {
+        unsigned char file_data[constants::packets_per_file*1056];
                 
-	ifstream fl("test.txt", ifstream::in);
-        string filename;
+        std::ifstream fl("test.txt", std::ifstream::in);
+        std::string filename;
         
         int bytes_read;
 	
@@ -194,7 +195,7 @@ void vdif_assembler::read_from_disk() {
                        std::cout << "can't open " << filename << std::endl;
                       	continue; 
                 }
-		cout << "Reading " << filename << endl;
+		std::cout << "Reading " << filename << std::endl;
 		
                	while ((bytes_read < constants::packets_per_file * 1056) && !(feof(fp))) {
 			fread(&file_data[bytes_read],sizeof(file_data[bytes_read]),1,fp);
@@ -250,7 +251,7 @@ void vdif_assembler::start_async(){
 	run_t.detach();
 }
 
-//TODO expand
+//TODO write
 void vdif_assembler::wait_until_end(){}
 
 
@@ -285,4 +286,22 @@ void vdif_processor::set_running(){
 	runflag = true;
 	pthread_mutex_unlock(&mutex);
 }
+
+
+base_python_processor::base_python_processor(char* name): vdif_processor(name){}
+
+void base_python_processor::process_chunk(const assembled_chunk* a){
+	ref_chunk = a;
+}
+
+void base_python_processor::initialize(){}
+
+void base_python_processor::finalize(){}
+
+base_python_processor::~base_python_processor(){}
+
+base_python_processor* make_python_processor(void (*callback_)(assembled_chunk*)){
+	return new base_python_processor("python_processor",callback_);
+}
+
 }
