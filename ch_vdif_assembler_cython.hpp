@@ -72,8 +72,8 @@ struct cython_assembled_chunk {
 struct cython_assembler {
 	vdif_assembler a;
 
-	cython_assembler(char* type, char*arg2)
-	: a(type,arg2)
+	cython_assembler(char* arg1, char*arg2)
+	: a(arg1,arg2)
 	{ }
 
 	void register_cpp_processor(cpp_processor *processor)
@@ -91,20 +91,21 @@ struct cython_assembler {
 	}
 
 	void use_network(){
-		a.source_type = 0
+		a.set_source_type(0);
+		a.set_args("network","10050");
 	}
 
 	void use_simulate(){
-		a.source_type = 1
+		a.set_source_type(1);
 	}
 
 	void use_filelist(){
-		a.source_type = 2
+		a.set_source_type(2);
 	}
 
 	void wait_until_end()
 	{
-	a.wait_until_end();
+		a.wait_until_end();
 	}
 };
 

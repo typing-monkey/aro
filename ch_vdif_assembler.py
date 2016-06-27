@@ -12,26 +12,26 @@ class constants:
 	chime_nfreq = ch_vdif_assembler_cython.chime_nfreq
 	#timestamps_per_frame = ch_vdif_assembler_cython.timestamps_per_frame
 	#num_disks = ch_vdif_assembler_cython.num_disks
-class StreamObj:
-	def __init__(self,stream_type,*args):
+class StreamObj(object):
+	def __init__(self,stream_type,**kwargs):
 		self.stream_type = stream_type
-		self.args = args
+		self.kwargs = kwargs
 
 	def __str__(self):
 		return self.stream_type
 
-def make_file_stream():
-	return StreamObj('network')
+def make_network_stream(**kwargs):
+	return StreamObj('network',**kwargs)
 
-def make_network_stream(fl):
-	return StreamObj('file-list',fl)
+def make_file_stream(**kwargs):
+	return StreamObj('file-list',**kwargs)
 
-def make_simulated_stream(nsec,gbps):
-	return StreamObj('network',nsec,gbps)
+def make_simulated_stream(**kwargs):
+	return StreamObj('network',**kwargs)
 
 class assembler:
 	def __init__(self, stream_objport=1000, write_to_disk=False, rbuf_size=0, abuf_size=4, assembler_nt=65536):
-		self._assembler = ch_vdif_assembler_cython.assembler(write_to_disk, rbuf_size, abuf_size, assembler_nt, port)
+		self._assembler = ch_vdif_assembler_cython.assembler("none","'none")
 		self.python_processor = None
 
 	def register_processor(self, p):
@@ -76,7 +76,7 @@ class assembler:
 
 		self._assembler.wait_until_end()
 
-class processor:
+class processor(object):
 	"""
 	To define a python processor, you subclass this base class.
 	When the assembler runs, it will call process_chunk() with a sequence of chunks, represented

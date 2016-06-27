@@ -36,25 +36,11 @@ void assembled_chunk::set_data(int i, unsigned char x) {
 	data[i] = x;
 }
 
-vdif_assembler::vdif_assembler(const char *arg1, const char *arg2){
-	
-	if (strcmp("network",arg1)==0) {
-		temp_buf = new unsigned char[constants::udp_packets * 1056];
-		mode = 0;
-		port = atoi(arg2);
-	} else if (strcmp("disk",arg1)==0) {
-		temp_buf = new unsigned char[constants::file_packets * 1056];
-		mode = 1;
-		filelist_name = new char[strlen(arg2)];
-		strcpy(filelist_name,arg2);
-	} else if (strcmp("simulate",arg1)==0) {
-		temp_buf = new unsigned char[1056];
-		mode = 2;
-	} else {
-		std::cout << "Unsupported option." << std::endl;
-		exit(1);
-	}
-
+vdif_assembler::vdif_assembler(const char *arg1_, const char *arg2_){
+	init_source = false;
+	source_type = -1;
+	arg1 = arg1_;
+	arg2 = arg2_;
 	processors = new vdif_processor *[constants::max_processors];
 	number_of_processors = 0;
 	data_buf = new unsigned char[constants::buffer_size * constants::nfreq];
@@ -105,23 +91,55 @@ int vdif_assembler::is_full() {
 	return bufsize == constants::buffer_size;
 }
 
+void vdif_assembler::set_args(char* arg1_, char* arg2_){
+	arg1 = arg1_;
+	arg2 = arg2_;
+}
+
+void vdif_assembler::check_init_source(){
+	if(init_source == true){
+		return;
+	}
+	else{
+		std::cout << source_type << std::endl;
+		if (source_type == 0) {
+			temp_buf = new unsigned char[constants::udp_packets * 1056];
+			port = atoi(arg2);
+		} else if (source_type == 2) {
+			temp_buf = new unsigned char[constants::file_packets * 1056];
+			filelist_name = new char[strlen(arg2)];
+			strcpy(filelist_name,arg2);
+		} else if (source_type == 1) {
+			temp_buf = new unsigned char[1056];
+		} else {
+			std::cout << "Unsupported option." << std::endl;
+			exit(1);
+		}
+		init_source = true;
+	}
+}
+
+void vdif_assembler::set_source_type(int st){
+	source_type = st;
+}
 
 void vdif_assembler::run() {
 
 	std::thread assemble_t(&vdif_assembler::assemble_chunk,this);
 	std::thread stream_t;
 
-	if (mode==0) {
+	check_init_source();
+
+	if (source_type==0) {
 		stream_t = std::thread(&vdif_assembler::network_capture,this);
-	} else if (mode==1) {
-		stream_t = std::thread(&vdif_assembler::read_from_disk,this);
-	} else if (mode==2) {
+	} else if (source_type==1) {
 		stream_t = std::thread(&vdif_assembler::simulate,this);
+	} else if (source_type==2) {
+		stream_t = std::thread(&vdif_assembler::read_from_disk,this);
 	}
 	
 	stream_t.join();
 	assemble_t.join();
-
 }
 
 

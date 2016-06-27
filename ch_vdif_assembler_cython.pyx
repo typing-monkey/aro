@@ -127,8 +127,8 @@ cdef class cp_assembled_chunk:
 cdef class assembler:
 	cdef ch_vdif_assembler_pxd.cython_assembler *p
 
-	def __cinit__(self, char* data_source, char* arg2):
-		self.p = new ch_vdif_assembler_pxd.cython_assembler(data_source,arg2)
+	def __cinit__(self, char* arg1, char* arg2):
+		self.p = new ch_vdif_assembler_pxd.cython_assembler(arg1,arg2)
 
 	def __dealloc__(self):
 		if self.p != NULL:
@@ -147,7 +147,7 @@ cdef class assembler:
 
 	#def register_cpp_processor(self, cpp_processor processor):
 	#	self.p[0].register_cpp_processor(processor.p)
-	def set_type(stream_type):
+	def set_type(self, stream_type):
 		if stream_type == 'network':
 			self.p[0].use_network()
 		elif stream_type == 'simulate':
@@ -155,7 +155,7 @@ cdef class assembler:
 		elif stream_type =='file-list':
 			self.p[0].use_filelist()
 		else:
-			raise NotImplementedException("Stream type " + stream_type + " not recognized")
+			raise NotImplementedError("Stream type " + stream_type + " not recognized")
 
 	def start_async(self):
 		self.p[0].start_async()

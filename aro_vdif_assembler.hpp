@@ -133,8 +133,11 @@ struct vdif_assembler {
 	int port;
 	int mode;
 	int source_type;
+	bool init_source;
 	std::string source;
 	char* filelist_name;
+	char* arg1;
+	char* arg2;
 
 	unsigned char *temp_buf;
 	unsigned char *data_buf;
@@ -154,12 +157,16 @@ struct vdif_assembler {
 	void network_capture();
 	void read_from_disk();
 	void assemble_chunk();
+	void set_args(char* arg1,char* arg2);
+	void set_source_type(int st);
 	int is_full();
 	assembled_chunk* get_chunk();
 	void vdif_read(unsigned char *data, int size);
 	void wait_until_end();
 	void start_async();
 	void fill_missing(int n);
+	void simulate();
+	void check_init_source();
 
 };
 

@@ -48,6 +48,9 @@ cdef extern from "ch_vdif_assembler_cython.hpp" namespace "aro_vdif_assembler":
         void start_async() except +
         void wait_until_end() except +
         cython_assembled_chunk* get_chunk() except +
+        void use_network() except +
+        void use_simulate() except +
+        void use_filelist() except +
 
     #cpp_processor *cpp_python_processor() except +
 
