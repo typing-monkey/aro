@@ -3,7 +3,8 @@ using namespace std;
 
 int main(int argc, char *argv[]) {
 	if (argc != 3) {
-		cout << "run with:test <network/disk> <port/filelist> " << endl;
+		cout << "run with:test <network/disk/simulate> <port/filelist> " << endl;
+		exit(10);
 	}
 
 	vdif_assembler a(argv[1],argv[2]);

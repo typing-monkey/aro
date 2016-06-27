@@ -61,6 +61,7 @@ struct vdif_assembler {
 	void run();
 	void network_capture();
 	void read_from_disk();
+	void simulate();
 	void assemble_chunk();
 	assembled_chunk* get_chunk();
 	int is_full();
