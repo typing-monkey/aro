@@ -1,3 +1,4 @@
+#include <time.h>
 #include <sys/socket.h>
 #include <fstream>
 #include <stdio.h>
@@ -19,6 +20,7 @@ namespace aro_vdif_assembler
 std::mutex mtx;
 std::condition_variable cv;
 
+
 assembled_chunk::assembled_chunk(long int start_time) {
 	
 	data = new unsigned char[constants::chunk_size * constants::nfreq];
@@ -38,13 +40,16 @@ vdif_assembler::vdif_assembler(const char *arg1, const char *arg2){
 	
 	if (strcmp("network",arg1)==0) {
 		temp_buf = new unsigned char[constants::udp_packets * 1056];
-		mode = 1;
+		mode = 0;
 		port = atoi(arg2);
 	} else if (strcmp("disk",arg1)==0) {
 		temp_buf = new unsigned char[constants::file_packets * 1056];
-		mode = 0;
+		mode = 1;
 		filelist_name = new char[strlen(arg2)];
 		strcpy(filelist_name,arg2);
+	} else if (strcmp("simulate",arg1)==0) {
+		temp_buf = new unsigned char[1056];
+		mode = 2;
 	} else {
 		std::cout << "Unsupported option." << std::endl;
 		exit(1);
@@ -106,12 +111,12 @@ void vdif_assembler::run() {
 	std::thread assemble_t(&vdif_assembler::assemble_chunk,this);
 	std::thread stream_t;
 
-	if (source_type == 0) {
+	if (mode==0) {
 		stream_t = std::thread(&vdif_assembler::network_capture,this);
-	} 
-	elif (sourc)
-	else {
+	} else if (mode==1) {
 		stream_t = std::thread(&vdif_assembler::read_from_disk,this);
+	} else if (mode==2) {
+		stream_t = std::thread(&vdif_assembler::simulate,this);
 	}
 	
 	stream_t.join();
@@ -227,6 +232,46 @@ assembled_chunk* vdif_assembler::get_chunk() {
 
 }
 
+void vdif_assembler::simulate() {
+	
+	int word[8];
+	struct tm epoch;
+	strptime("2000-01-01 00:00:00","%Y-%m-%dT %H:%M:%S", &epoch);
+	
+
+	for(int t0 = difftime(time(0),mktime(&epoch));;t0++) {
+		int duration = (int)((rand() % 3 + 3)*1000/2.56);
+		int start_frame = rand() % (constants::frame_per_second - 2000);
+		for (int frame = 0; frame < constants::frame_per_second; frame++) {
+			unsigned char voltage = 0;
+			if ((t0 % 2 == 1) && (frame > start_frame) && (frame < start_frame+duration)) {
+				voltage = 255;
+			}
+			for (int pol = 0; pol < 2; pol++) {
+				
+				word[0] = t0 & 0x3FFFFFFF;
+				word[1] = frame & 0xFFFFFF;
+				word[3] = (pol << 16) & 0x3FF0000;
+				
+				for (int i = 0; i < 8; i++){
+					for (int j = 0; j < 4; j++) {
+						temp_buf[i*4+j] =(int) ((word[i] >> (j*8)) & 0xFF);
+					}
+				}
+
+					
+				for (int i = 32; i < 1056; i++) {
+					temp_buf[i] = voltage;
+				}
+				
+				vdif_read(temp_buf, 1056);
+			}	
+		}	
+	}
+
+}
+
+
 
 void vdif_assembler::vdif_read(unsigned char *data, int size) {
 
@@ -253,7 +298,6 @@ void vdif_assembler::vdif_read(unsigned char *data, int size) {
 		}
 		
 		t0 = (long int) (word[0] & 0x3FFFFFFF) * (long int) constants::frame_per_second + (long int) (word[1] & 0xFFFFFF);
-		
 		pol = (word[3] >> 16) & 0x3FF;
 		
 		current = t0 * 2 + pol;
@@ -282,7 +326,6 @@ void vdif_assembler::vdif_read(unsigned char *data, int size) {
 		if (bufsize >= constants::chunk_size) {
 			cv.notify_one();
 		} 
-	
 		
 
 		//cout << "start: " << start_index << " end: " << end_index << " size: " << bufsize << endl;
