@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <thread>
 #include <cinttypes>
+#include <queue>
 
 #include "emmintrin.h"
 #include "tmmintrin.h"
@@ -37,18 +38,31 @@ namespace aro_vdif_assembler{
 }; // pacify emacs c-mode
 #endif
 
+// namespace constants{
+
+// 	static const int nfreq = 1024;
+// 	static const int header_size = 12; //int64 time + int32 thread ID
+// 	static const int chunk_size = 65536;
+// 	static const int num_time = 1024;
+// 	static const int max_processors = 10;
+// 	static const int frame_per_second = 390625;
+// 	static const int buffer_size = 524288; //at most 8 chunk in buffer
+// 	static const int packets_per_file = 131072;
+// 	static const int udf_packetsize = 1056 * 32;
+
+// };
+
 namespace constants{
 
-	static const int nfreq = 1024;
-	static const int header_size = 12; //int64 time + int32 thread ID
-	static const int chunk_size = 65536;
-	static const int num_time = 1024;
-	static const int max_processors = 10;
-	static const int frame_per_second = 390625;
-	static const int buffer_size = 524288; //at most 8 chunk in buffer
-	static const int packets_per_file = 131072;
-	static const int udf_packetsize = 1056 * 32;
-
+	const int nfreq = 1024;
+	const int header_size = 12; //int64 time + int32 thread ID
+	const int chunk_size = 65536;
+	const int max_processors = 10;
+	const int frame_per_second = 390625;
+	const int buffer_size = 524288; //at most 8 chunk in buffer
+	const int file_packets = 131072;
+	const int udp_packets = 32;
+	const int max_chunks = 10;
 };
 
 struct header {
@@ -70,7 +84,7 @@ struct assembled_chunk {
 	unsigned char *data;
 	//char* buf;
 
-	assembled_chunk(long int t0,int nt);
+	assembled_chunk(long int t0);
 
 	~assembled_chunk();
 
@@ -117,6 +131,7 @@ struct vdif_assembler {
 	int start_index, end_index;
 	int bufsize;
 	int port;
+	int mode;
 	std::string source;
 	char* filelist_name;
 
@@ -147,18 +162,18 @@ struct vdif_assembler {
 
 };
 
-struct base_python_processor : public vdif_processor {
-	//void (*python_callback)(assembled_chunk*);
-	//base_python_processor(char* name, void (*python_callback_)(assembled_chunk*));
-	base_python_processor(char* name);
-	~base_python_processor();
-	virtual void initialize();
-	virtual void process_chunk(const assembled_chunk* a);
-	virtual void finalize();
-	assembled_chunk* get_chunk();
-};
+// struct base_python_processor : public vdif_processor {
+// 	//void (*python_callback)(assembled_chunk*);
+// 	//base_python_processor(char* name, void (*python_callback_)(assembled_chunk*));
+// 	base_python_processor(char* name);
+// 	~base_python_processor();
+// 	virtual void initialize();
+// 	virtual void process_chunk(const assembled_chunk* a);
+// 	virtual void finalize();
+// 	assembled_chunk* get_chunk();
+// };
 
-base_python_processor* make_python_processor(void (* callback)(assembled_chunk*));
+//base_python_processor* make_python_processor(void (* callback)(assembled_chunk*));
 
 inline void _sum16_auto_correlations(int &sum, int &count, const uint8_t *buf)
 {

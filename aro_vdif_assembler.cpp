@@ -19,25 +19,11 @@ namespace aro_vdif_assembler
 std::mutex mtx;
 std::condition_variable cv;
 
-
-namespace constants{
-
-	const int nfreq = 1024;
-	const int header_size = 12; //int64 time + int32 thread ID
-	const int chunk_size = 65536;
-	const int max_processors = 10;
-	const int frame_per_second = 390625;
-	const int buffer_size = 524288; //at most 8 chunk in buffer
-	const int file_packets = 131072;
-	const int udp_packets = 32;
-	const int max_chunks = 10;
-}
-
-assembled_chunk::assembled_chunk(long int start_time, int my_nt) {
+assembled_chunk::assembled_chunk(long int start_time) {
 	
 	data = new unsigned char[constants::chunk_size * constants::nfreq];
 	t0 = start_time;
-	nt = my_nt
+	nt = constants::chunk_size/2;
 }
 
 assembled_chunk::~assembled_chunk() {
@@ -60,11 +46,10 @@ vdif_assembler::vdif_assembler(const char *arg1, const char *arg2){
 		filelist_name = new char[strlen(arg2)];
 		strcpy(filelist_name,arg2);
 	} else {
-		cout << "Unsupported option." << endl;
+		std::cout << "Unsupported option." << std::endl;
 		exit(1);
 	}
 
-	nt = chunk_size/2;
 	processors = new vdif_processor *[constants::max_processors];
 	number_of_processors = 0;
 	data_buf = new unsigned char[constants::buffer_size * constants::nfreq];
@@ -72,7 +57,7 @@ vdif_assembler::vdif_assembler(const char *arg1, const char *arg2){
 	bufsize = 0;
 	start_index = 0;
 	end_index = 0;
-	processor_threads = new thread[constants::max_processors];
+	processor_threads = new std::thread[constants::max_processors];
 	
 
 }
@@ -156,7 +141,7 @@ void vdif_assembler::assemble_chunk() {
 
 		bufsize -= constants::chunk_size;
 	
-		cout << "excess: " << bufsize << endl;
+		std::cout << "excess: " << bufsize << std::endl;
 
 		lk.unlock();
 		
@@ -202,7 +187,7 @@ void vdif_assembler::read_from_disk() {
         
         int bytes_read;	
 	if (!fl) {
-		cout << "Cannot open filelist." << endl;
+		std::cout << "Cannot open filelist." << std::endl;
 		exit(1);
 	}
         while (getline(fl, filename)){
@@ -234,7 +219,7 @@ assembled_chunk* vdif_assembler::get_chunk() {
 		chunks.pop();
 		return temp;
 	} else {
-		cout << "no chunk available at this moment." << endl;
+		std::cout << "no chunk available at this moment." << std::endl;
 		return 0;
 	}
 
@@ -276,8 +261,8 @@ void vdif_assembler::vdif_read(unsigned char *data, int size) {
 		}
 
 		if (nmissing) {
-			cout << "current: " << current << " expect: " << expect << endl; 
-			cout << "start: " << start_index << " end: " << end_index << endl;
+			std::cout << "current: " << current << " expect: " << expect << std::endl; 
+			std::cout << "start: " << start_index << " end: " << end_index << std::endl;
 			fill_missing(nmissing);
 		}
 
@@ -316,7 +301,7 @@ vdif_processor::vdif_processor(const std::string &name_, bool is_critical_=false
 	name = name_;
 	is_critical = is_critical_;
 	runflag = false;
-	pthread_mutex_init(&mutex, NULL);
+	//pthread_mutex_init(&mutex, NULL);
 }
 
 vdif_processor::~vdif_processor(){
@@ -324,11 +309,11 @@ vdif_processor::~vdif_processor(){
 }
 
 bool vdif_processor::is_running(){
-	pthread_mutex_lock(&mutex);
-	bool ret = runflag;
-	pthread_mutex_unlock(&mutex);
+	// pthread_mutex_lock(&mutex);
+	// bool ret = runflag;
+	// pthread_mutex_unlock(&mutex);
 
-	return ret;
+	return true;
 }
 
 void vdif_assembler::fill_missing(int n) {
@@ -347,26 +332,24 @@ void vdif_assembler::fill_missing(int n) {
 		bufsize++;
 	}
 
-	runflag = true;
-	pthread_mutex_unlock(&mutex);
 }
 
 
-base_python_processor::base_python_processor(char* name): vdif_processor(name){}
+// base_python_processor::base_python_processor(char* name): vdif_processor(name){}
 
-void base_python_processor::process_chunk(const assembled_chunk* a){
-	ref_chunk = a;
-}
+// void base_python_processor::process_chunk(const assembled_chunk* a){
+// 	ref_chunk = a;
+// }
 
-void base_python_processor::initialize(){}
+// void base_python_processor::initialize(){}
 
-void base_python_processor::finalize(){}
+// void base_python_processor::finalize(){}
 
-base_python_processor::~base_python_processor(){}
+// base_python_processor::~base_python_processor(){}
 
-base_python_processor* make_python_processor(void (*callback_)(assembled_chunk*)){
-	return new base_python_processor("python_processor",callback_);
-}
+// base_python_processor* make_python_processor(void (*callback_)(assembled_chunk*)){
+// 	return new base_python_processor("python_processor",callback_);
+// }
 
 }
 

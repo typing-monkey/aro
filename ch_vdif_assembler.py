@@ -6,11 +6,11 @@ import numpy as np
 
 import ch_vdif_assembler_cython
 
-from ch_vdif_assembler_cython import cpp_python_processor
+#from ch_vdif_assembler_cython import cpp_python_processor
 
 class constants:
 	chime_nfreq = ch_vdif_assembler_cython.chime_nfreq
-	timestamps_per_frame = ch_vdif_assembler_cython.timestamps_per_frame
+	#timestamps_per_frame = ch_vdif_assembler_cython.timestamps_per_frame
 	#num_disks = ch_vdif_assembler_cython.num_disks
 
 
@@ -20,9 +20,10 @@ class assembler:
 		self.python_processor = None
 
 	def register_processor(self, p):
-		if isinstance(p, ch_vdif_assembler_cython.cpp_processor):
-			self._assembler.register_cpp_processor(p)   # register C++ processor (this actually spawns a processing thread)
-		elif not isinstance(p, processor):
+		# if isinstance(p, ch_vdif_assembler_cython.cpp_processor):
+		# 	self._assembler.register_cpp_processor(p)   # register C++ processor (this actually spawns a processing thread)
+		# elif not isinstance(p, processor):
+		if not isinstance(p, processor):
 			raise RuntimeError('Argument to assembler.register_processor() must be either an object of class ch_vdif_assembler.processor, or a C++ processor (e.g. returned by make_waterfall_plotter)')
 		elif self.python_processor is not None:
 			raise RuntimeError('Currently, ch_vdif_assembler only allows registering one python processor (but an arbitrary number of C++ processors)')

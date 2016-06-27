@@ -30,6 +30,7 @@ ch_vdif_assembler_cython.so: ch_vdif_assembler_cython.cpp libvdif_assembler.so a
 
 install: $(INCFILES) $(LIBFILES) $(LIBCYTHON)
 	cp -f $(INCFILES) $(INCDIR)/
+	cp -f $(LIBFILES) $(LIBDIR)/
 	cp -f $(LIBCYTHON) $(PYMODULES) $(PYDIR)/
 
 uninstall:

@@ -7,23 +7,22 @@ cimport numpy as np
 
 cimport ch_vdif_assembler_pxd
 
-from ch_vdif_assembler_pxd cimport cython_assembled_chunk, cython_assembler, assembled_chunk, base_python_processor
+from ch_vdif_assembler_pxd cimport cython_assembled_chunk, cython_assembler
 
 ##############################################  Constants  #########################################
 
 chime_nfreq = ch_vdif_assembler_pxd.nfreq
-timestamps_per_frame = ch_vdif_assembler_pxd.num_time
 
-cdef class cpp_processor:
-	cdef ch_vdif_assembler_pxd.cpp_processor *p
+#cdef class cpp_processor:
+#	cdef ch_vdif_assembler_pxd.cpp_processor *p
 
-	def __cinit__(self):
-		self.p = NULL
+#	def __cinit__(self):
+#		self.p = NULL
 
-	def __dealloc__(self):
-		if self.p != NULL:
-			del self.p
-			self.p = NULL
+#	def __dealloc__(self):
+#		if self.p != NULL:
+#			del self.p
+#			self.p = NULL
 
 ###########################################  assembled_chunk  ######################################
 
@@ -81,9 +80,12 @@ cdef class cp_assembled_chunk:
 #        self.p[0].fill_efield(&efield[0,0,0], &mask[0,0,0])
 #        return (t0, nt, efield, mask)
 
-cdef void convert_to_cython_chunk(assembled_chunk* c, void* fun):
-	cython_assembled_chunk* a = new cython_assembled_chunk(<assembled_chunk*>c)
-	fun(a)
+#cdef void convert_to_cython_chunk(assembled_chunk* c, void* fun):
+#	cython_assembled_chunk* a = new cython_assembled_chunk(<assembled_chunk*>c)
+#	fun(a)
+
+
+
 	#ret.p = new ch_vdif_assembler_pxd.cython_assembled_chunk(<ch_vdif_assembler_pxd.assembled_chunk*>c)
 #	return ret
 #def convert_chunk(x)
@@ -103,10 +105,10 @@ cdef void convert_to_cython_chunk(assembled_chunk* c, void* fun):
 #	ret.p = ch_vdif_assembler_pxd.cpp_python_processor(<void*>callback)
 #	return ret
 
-def cpp_python_processor():
-	ret = cpp_processor()
-	ret.p = ch_vdif_assembler_pxd.cpp_python_processor()
-	return ret
+#def cpp_python_processor():
+#	ret = cpp_processor()
+#	ret.p = ch_vdif_assembler_pxd.cpp_python_processor()
+#	return ret
 
 #cdef class python_processor:
 #	cdef ch_vdif_assembler_pxd.base_python_processor *p
@@ -133,16 +135,18 @@ cdef class assembler:
 			del self.p
 			self.p = NULL
 
-	def get_python_processor(self):
-		cpp_proc = cpp_python_processor()
-		self.register_cpp_processor(cpp_proc)
-		return cpp_proc
+	#def get_python_processor(self):
+	#	cpp_proc = cpp_python_processor()
+	#	self.register_cpp_processor(cpp_proc)
+	#	return cpp_proc
 
 	def get_chunk(self):
-		return cp_assembled_chunk(self.p.get_chunk())
+		cdef cp_assembled_chunk chunk = cp_assembled_chunk()
+		chunk.p = self.p[0].get_chunk()
+		return chunk
 
-	def register_cpp_processor(self, cpp_processor processor):
-		self.p[0].register_cpp_processor(processor.p)
+	#def register_cpp_processor(self, cpp_processor processor):
+	#	self.p[0].register_cpp_processor(processor.p)
 
 	def start_async(self):
 		self.p[0].start_async()

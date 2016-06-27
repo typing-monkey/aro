@@ -33,12 +33,12 @@ struct cpp_processor {
 	}
 };
 
-struct source_cpp_processor{
-	base_python_processor* p;
-	source_cpp_processor(const base_python_processor* p_){
-		p = p_;
-	}
-};
+// struct source_cpp_processor{
+// 	base_python_processor* p;
+// 	source_cpp_processor(const base_python_processor* p_){
+// 		p = p_;
+// 	}
+// };
 
 struct cython_assembled_chunk {
 	assembled_chunk* p;
@@ -63,11 +63,11 @@ struct cython_assembled_chunk {
 	}
 };
 
-inline source_cpp_processor *cpp_python_processor(const void(*python_callback)(assembled_chunk*))
-{
-    vdif_processor* p = make_python_processor(python_callback);
-    return new cpp_processor(p);
-}
+// inline source_cpp_processor *cpp_python_processor(const void(*python_callback)(assembled_chunk*))
+// {
+//     vdif_processor* p = make_python_processor(python_callback);
+//     return new cpp_processor(p);
+// }
 
 struct cython_assembler {
 	vdif_assembler a;
