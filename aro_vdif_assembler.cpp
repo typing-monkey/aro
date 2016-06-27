@@ -106,9 +106,11 @@ void vdif_assembler::run() {
 	std::thread assemble_t(&vdif_assembler::assemble_chunk,this);
 	std::thread stream_t;
 
-	if (mode) {
+	if (source_type == 0) {
 		stream_t = std::thread(&vdif_assembler::network_capture,this);
-	} else {
+	} 
+	elif (sourc)
+	else {
 		stream_t = std::thread(&vdif_assembler::read_from_disk,this);
 	}
 	

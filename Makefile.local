@@ -2,14 +2,14 @@
 BINDIR=/usr/bin
 
 # Directory where C++ libraries will be installed (e.g. libch_vdif_assembler.so)
-LIBDIR=/usr/lib
+LIBDIR=/usr/lib64
 
 # Directory where C++ header files will be installed (e.g. ch_vdif_assembler.hpp)
 INCDIR=/usr/include
 
-# INCDIR2=/usr/lib64/python2.7/site-packages/numpy/core/include
+INCDIR2=/usr/lib64/python2.7/site-packages/numpy/core/include
 # INCDIR2=~/anaconda/lib/python2.7/site-packages/numpy/core/include
-INCDIR2=/home/squirrel/anaconda/lib/python2.7/site-packages/numpy/core/include/
+#INCDIR2=/home/squirrel/anaconda/lib/python2.7/site-packages/numpy/core/include/
 
 
 # Directory where Python modules will be installed

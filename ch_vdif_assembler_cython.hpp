@@ -72,8 +72,8 @@ struct cython_assembled_chunk {
 struct cython_assembler {
 	vdif_assembler a;
 
-	cython_assembler(bool write_to_disk, int rbuf_size, int abuf_size, int assembler_nt, int port)
-	: a("network","10050")
+	cython_assembler(char* type, char*arg2)
+	: a(type,arg2)
 	{ }
 
 	void register_cpp_processor(cpp_processor *processor)
@@ -88,6 +88,18 @@ struct cython_assembler {
 	void start_async()
 	{
 	a.start_async();
+	}
+
+	void use_network(){
+		a.source_type = 0
+	}
+
+	void use_simulate(){
+		a.source_type = 1
+	}
+
+	void use_filelist(){
+		a.source_type = 2
 	}
 
 	void wait_until_end()

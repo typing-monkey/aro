@@ -40,7 +40,7 @@ cdef extern from "ch_vdif_assembler_cython.hpp" namespace "aro_vdif_assembler":
         void fill_efield(uint8_t *efield, int32_t *mask) except +
 
     cdef cppclass cython_assembler:
-        cython_assembler(bool write_to_disk, int rbuf_size, int abuf_size, int assembler_nt, int port) except +
+        cython_assembler(char* arg1, char* arg2) except +
 
         #void register_cpp_processor(cpp_processor *p) except +
         #void register_python_processor() except +

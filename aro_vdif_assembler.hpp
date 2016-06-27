@@ -132,6 +132,7 @@ struct vdif_assembler {
 	int bufsize;
 	int port;
 	int mode;
+	int source_type;
 	std::string source;
 	char* filelist_name;
 

@@ -12,10 +12,25 @@ class constants:
 	chime_nfreq = ch_vdif_assembler_cython.chime_nfreq
 	#timestamps_per_frame = ch_vdif_assembler_cython.timestamps_per_frame
 	#num_disks = ch_vdif_assembler_cython.num_disks
+class StreamObj:
+	def __init__(self,stream_type,*args):
+		self.stream_type = stream_type
+		self.args = args
 
+	def __str__(self):
+		return self.stream_type
+
+def make_file_stream():
+	return StreamObj('network')
+
+def make_network_stream(fl):
+	return StreamObj('file-list',fl)
+
+def make_simulated_stream(nsec,gbps):
+	return StreamObj('network',nsec,gbps)
 
 class assembler:
-	def __init__(self, port=1000, write_to_disk=False, rbuf_size=0, abuf_size=4, assembler_nt=65536):
+	def __init__(self, stream_objport=1000, write_to_disk=False, rbuf_size=0, abuf_size=4, assembler_nt=65536):
 		self._assembler = ch_vdif_assembler_cython.assembler(write_to_disk, rbuf_size, abuf_size, assembler_nt, port)
 		self.python_processor = None
 
@@ -31,15 +46,16 @@ class assembler:
 			self.python_processor = p
 
 	#fix?
-	def run(self, stream):
+	def run(self, stream_obj):
 		# if self.python_processor is None:
 		# 	self._assembler.start_async()
 		# 	self._assembler.wait_until_end()
 		# 	return
+		self._assembler.set_type(str(stream_obj))
 		self._assembler.start_async()
-		while True:
-			(t0,nt,efield,mask) = self._assembler.get_chunk().get_data()
-			self.python_processor.process_chunk(t0,nt,efield,mask)
+		# while True:
+		# 	(t0,nt,efield,mask) = self._assembler.get_chunk().get_data()
+		# 	self.python_processor.process_chunk(t0,nt,efield,mask)
 
 		# self._assembler.register_python_processor()
 
