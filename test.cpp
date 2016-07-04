@@ -8,7 +8,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	vdif_assembler a(argv[1],argv[2]);
-	vdif_processor p;
+	vdif_processor p("test.dat");
 	a.register_processor(&p);
 	a.run();
 }

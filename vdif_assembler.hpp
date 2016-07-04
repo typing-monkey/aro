@@ -26,7 +26,8 @@ struct assembled_chunk {
 struct vdif_processor {
 
 	bool is_alive;
-	vdif_processor();
+	FILE *output;
+	vdif_processor(const char *filename);
 	~vdif_processor();
 	void process_chunk(assembled_chunk *c);
 
@@ -68,4 +69,3 @@ struct vdif_assembler {
 	void vdif_read(unsigned char *data, int size);
 	void fill_missing(int n);
 };
-

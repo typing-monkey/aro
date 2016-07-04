@@ -12,13 +12,16 @@
 #include <thread>
 #include <mutex>
 #include <condition_variable>
+
 #include "vdif_assembler.hpp"
+#include "square_sum.cpp"
 
 using namespace std;
 
 mutex mtx;
 condition_variable cv;
 
+char *strptime(const char * __restrict, const char * __restrict, struct tm * __restrict);
 
 namespace constants{
 
@@ -49,15 +52,39 @@ void assembled_chunk::set_data(int i, unsigned char x) {
 	data[i] = x;
 }
 
-vdif_processor::vdif_processor(){
+vdif_processor::vdif_processor(const char *filename){
 	is_alive = true;
+	output = fopen(filename, "w");
+	if (!output) {
+		cout << "Can't write to the file." << endl;
+		exit(10);
+	}	
+	
 }
 
 vdif_processor::~vdif_processor(){
+	fclose(output);
 }
 
 void vdif_processor::process_chunk(assembled_chunk *c) {
 	cout << c->t0 << endl;
+	unsigned char temp[constants::chunk_size>>1];
+	
+	for (int i = 0; i < constants::nfreq; i++) {
+		for (int j = 0; j < (constants::chunk_size)>>1;j++) {
+			temp[j] = c->data[i+((constants::nfreq*j)<<1)];	
+		}
+		int intensity[constants::chunk_size >> 9] ={0};
+		square_sum(temp,constants::chunk_size >>1 ,8,intensity);
+		//for (int j = 0; j < int(constants::chunk_size / 256); j++) {
+		//	if (intensity[j]) {
+		//		cout << intensity[j] << endl;
+		//	}
+		//}
+		fwrite(intensity, sizeof(intensity[0]), constants::chunk_size>>9, output);
+		//cout << "Frequency " << i << " : " << intensity[0] << endl;
+	
+	}
 	cout << "Processing chunk done." << endl;
 
 }
@@ -275,10 +302,14 @@ void vdif_assembler::simulate() {
 	for(int t0 = difftime(time(0),mktime(&epoch));;t0++) {
 		int duration = (int)((rand() % 3 + 3)*1000/2.56);
 		int start_frame = rand() % (constants::frame_per_second - 2000);
+		start_frame = 1000;
+		//cout << duration << " " << start_frame << endl;
 		for (int frame = 0; frame < constants::frame_per_second; frame++) {
-			unsigned char voltage = 0;
-			if ((t0 % 2 == 1) && (frame > start_frame) && (frame < start_frame+duration)) {
-				voltage = 255;
+			unsigned char voltage = 136;
+			//if ((frame > start_frame) && (frame < start_frame+duration)) {
+				//cout << "pulse!" << endl;
+			if (((frame % 50000) > 10000) && ((frame % 50000) < 13000)) {
+				voltage = 137;
 			}
 			for (int pol = 0; pol < 2; pol++) {
 				
@@ -299,7 +330,8 @@ void vdif_assembler::simulate() {
 				
 				vdif_read(temp_buf, 1056);
 			}	
-		}	
+		}
+		this_thread::sleep_for(chrono::seconds(3));
 	}
 
 }
@@ -382,4 +414,5 @@ void vdif_assembler::fill_missing(int n) {
 	}
 	
 }
+
 
