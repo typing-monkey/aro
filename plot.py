@@ -13,28 +13,36 @@ freq = 0
 
 
 count = 0
-for i in range(8):
-     for freq in range(1024):
-          for j in range(128):
-               a[freq][i*128+j] = intensity[i*1024*128+freq*128+j]
-intensity = intensity[1024*128*8:]
+#for i in range(8):
+     #for freq in range(1024):
+          #for j in range(128):
+               #a[freq][i*128+j] = intensity[freq*128+j]
+     #intensity = intensity[1024*128:]
+                
 plt.imshow(a,cmap="Blues")
 plt.xlabel('Time')
-plt.ylabel('Frequency')     
+plt.ylabel('Frequency')
 plt.colorbar()
-plt.pause(0.05)
+plt.clim(700,8000)
+plt.savefig('1.png')
+#plt.pause(0.05)
 
+index = 1
 while True:
      for freq in range(1024):
-          a[freq] = a[freq][32:]
-          a[freq].extend([0]*32)
+          a[freq] = a[freq][64:]
+          a[freq].extend([0]*64)
      for freq in range(1024):     
-          for i in range(32):
-               a[freq][-1*(32-i)] = intensity[freq*128+i+count]
-     
-     plt.imshow(a,cmap="Blues") 
+          for i in range(64):
+               a[freq][-1*(64-i)] = intensity[freq*128+i+count]
+     index += 1
+     plt.imshow(a,cmap="Blues",vmin = 700, vmax = 8000,origin='lower')
+     plt.xlim()
+     #plt.clim(700,8000)
+     plt.savefig(str(index)+'.png')
+     #plt.colorbar()
      plt.pause(0.05)
-     count = (count + 32) % 128
+     count = (count + 64) % 128
      if count == 0:
           intensity = intensity[1024*128:]
         

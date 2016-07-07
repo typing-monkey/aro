@@ -67,7 +67,7 @@ vdif_processor::~vdif_processor(){
 }
 
 void vdif_processor::process_chunk(assembled_chunk *c) {
-	cout << c->t0 << endl;
+	cout << c->t0 << endl;	
 	unsigned char temp[constants::chunk_size>>1];
 	
 	for (int i = 0; i < constants::nfreq; i++) {
@@ -194,7 +194,7 @@ void vdif_assembler::assemble_chunk() {
 		assembled_chunk c(header_buf[start_index].t0);	
 		
 		for (int i = 0; i < constants::chunk_size * constants::nfreq; i++) {
-			c.set_data(i, data_buf[start_index+i]);
+			c.set_data(i, data_buf[start_index*constants::nfreq+i]);
 		}
 		if (chunks.size() < constants::max_chunks) {
 			chunks.push(&c);
@@ -298,17 +298,17 @@ void vdif_assembler::simulate() {
 	struct tm epoch;
 	strptime("2000-01-01 00:00:00","%Y-%m-%dT %H:%M:%S", &epoch);
 	
-
+	
 	for(int t0 = difftime(time(0),mktime(&epoch));;t0++) {
-		int duration = (int)((rand() % 3 + 3)*1000/2.56);
-		int start_frame = rand() % (constants::frame_per_second - 2000);
-		start_frame = 1000;
+		int duration = (int)((rand() % 3 + 3)*1000);
+		//int start_frame = rand() % (constants::frame_per_second - 2000);
+		//start_frame = 1000;
 		//cout << duration << " " << start_frame << endl;
 		for (int frame = 0; frame < constants::frame_per_second; frame++) {
 			unsigned char voltage = 136;
 			//if ((frame > start_frame) && (frame < start_frame+duration)) {
 				//cout << "pulse!" << endl;
-			if (((frame % 50000) > 10000) && ((frame % 50000) < 13000)) {
+			if (((frame % 50000) >= 10000) && ((frame % 50000) < (10000+duration))) {
 				voltage = 137;
 			}
 			for (int pol = 0; pol < 2; pol++) {
@@ -328,10 +328,16 @@ void vdif_assembler::simulate() {
 					temp_buf[i] = voltage;
 				}
 				
-				vdif_read(temp_buf, 1056);
+				unique_lock<mutex> lk(mtx);
+				if (!is_full()) {
+					vdif_read(temp_buf, 1056);
+				}
+				else {
+					cout << "Buffer is full. Dropping packets." << endl;
+				}
+				lk.unlock();
 			}	
 		}
-		this_thread::sleep_for(chrono::seconds(3));
 	}
 
 }
